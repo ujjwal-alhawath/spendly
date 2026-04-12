@@ -9,8 +9,6 @@ Spendly is a modern, responsive personal finance dashboard that helps you track 
 - **AI Advisor:** Integrated with Google Gemini 2.0 Flash to give specific, actionable financial advice based on your exact spending history.
 - **Local Persistence:** Your data is kept locally on your device with zero-setup using `localStorage` and `Zustand`.
 
-## Screenshots
-> *(Screenshot placeholder)*
 
 ## Tech Stack
 - React 18 + Vite
@@ -26,9 +24,3 @@ Spendly is a modern, responsive personal finance dashboard that helps you track 
 3. Replace the API key in `.env` if you wish to use your own Gemini key (there is an `.env.example` provided).
 4. Run `npm run dev` to start the local development server.
 
-## Vercel Deployment Guide
-To deploy this project:
-1. Ensure your code is pushed to a GitHub repository.
-2. Go to Vercel, click "Add New Project" and select your GitHub repo.
-3. In the Environment Variables section, add `VITE_GEMINI_API_KEY` and paste your Gemini API key.
-4. Click Deploy!
