@@ -5,15 +5,35 @@ import { useStore } from '../store/useStore';
 export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const login = useStore((state) => state.login);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
     if (email && password) {
-      // Mock login
-      login({ email, name: email.split('@')[0] });
-      navigate('/');
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          login(data.user, data.token);
+          navigate('/');
+        } else {
+          setError(data.message || 'Login failed');
+        }
+      } catch (err) {
+        setError('Network error. Please try again later.');
+      }
     }
   };
 
@@ -24,6 +44,12 @@ export const Login = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-400">Sign in to your Spendly account</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

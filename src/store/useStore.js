@@ -8,14 +8,15 @@ export const useStore = create(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
       expenses: [],
       monthlyBudget: 15000,
       chatHistory: [],
 
-      login: (userData) => set({ user: userData, isAuthenticated: true }),
-      signup: (userData) => set({ user: userData, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      login: (userData, token) => set({ user: userData, token, isAuthenticated: true }),
+      signup: (userData, token) => set({ user: userData, token, isAuthenticated: true }),
+      logout: () => set({ user: null, token: null, isAuthenticated: false }),
 
       addExpense: (expenseData) =>
         set((state) => ({

@@ -6,15 +6,35 @@ export const Signup = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const signup = useStore((state) => state.signup);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (name && email && password) {
-      // Mock signup
-      signup({ email, name });
-      navigate('/');
+      try {
+        const response = await fetch('http://localhost:5000/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, email, password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          signup(data.user, data.token);
+          navigate('/');
+        } else {
+          setError(data.message || 'Signup failed');
+        }
+      } catch (err) {
+        setError('Network error. Please try again later.');
+      }
     }
   };
 
@@ -25,6 +45,12 @@ export const Signup = () => {
           <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
           <p className="text-gray-400">Join Spendly to manage your finances</p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
