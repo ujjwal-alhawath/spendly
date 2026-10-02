@@ -7,9 +7,15 @@ import { generateId } from '../utils/formatters';
 export const useStore = create(
   persist(
     (set) => ({
+      user: null,
+      isAuthenticated: false,
       expenses: [],
       monthlyBudget: 15000,
       chatHistory: [],
+
+      login: (userData) => set({ user: userData, isAuthenticated: true }),
+      signup: (userData) => set({ user: userData, isAuthenticated: true }),
+      logout: () => set({ user: null, isAuthenticated: false }),
 
       addExpense: (expenseData) =>
         set((state) => ({

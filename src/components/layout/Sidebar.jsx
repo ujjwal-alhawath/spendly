@@ -1,7 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useStore } from '../../store/useStore';
 
 export function Sidebar({ isOpen, onClose }) {
+  const { user, logout } = useStore();
   const links = [
     { to: '/', label: 'Dashboard', icon: '📊' },
     { to: '/expenses', label: 'Expenses', icon: '💸' },
@@ -45,6 +47,26 @@ export function Sidebar({ isOpen, onClose }) {
             </NavLink>
           ))}
         </nav>
+
+        {user && (
+          <div className="p-4 border-t border-border mt-auto">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-textPrimary">{user.name}</span>
+                <span className="text-xs text-muted truncate max-w-[120px]">{user.email}</span>
+              </div>
+              <button 
+                onClick={logout}
+                className="p-2 text-muted hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                title="Logout"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </aside>
     </>
   );
