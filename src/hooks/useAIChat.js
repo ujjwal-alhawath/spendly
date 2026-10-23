@@ -12,8 +12,14 @@ export function useAIChat() {
   const expenses = useStore(state => state.expenses);
   const monthlyBudget = useStore(state => state.monthlyBudget);
   const addMessage = useStore(state => state.addMessage);
+  const user = useStore(state => state.user);
 
   const sendMessage = async (userMessage) => {
+    if (!user?.isPremium) {
+      toast.error("Spendly AI Advisor is a Pro feature. Upgrade to Premium to chat.");
+      return;
+    }
+
     // 1. Instantly add user message
     addMessage({ id: Date.now().toString(), role: 'user', content: userMessage });
     setIsTyping(true);

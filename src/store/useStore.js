@@ -17,6 +17,14 @@ export const useStore = create(
       login: (userData, token) => set({ user: userData, token, isAuthenticated: true }),
       signup: (userData, token) => set({ user: userData, token, isAuthenticated: true }),
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      setPremium: (isPremium = true) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, isPremium } : null,
+        })),
+      updateUser: (userData) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...userData } : userData,
+        })),
 
       addExpense: (expenseData) =>
         set((state) => ({

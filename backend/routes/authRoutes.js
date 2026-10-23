@@ -42,7 +42,15 @@ router.post('/signup', async (req, res) => {
       { expiresIn: '7d' },
       (err, token) => {
         if (err) throw err;
-        res.status(201).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+        res.status(201).json({ 
+          token, 
+          user: { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email,
+            isPremium: Boolean(user.isPremium)
+          } 
+        });
       }
     );
   } catch (err) {
@@ -81,7 +89,15 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' },
       (err, token) => {
         if (err) throw err;
-        res.status(200).json({ token, user: { id: user.id, name: user.name, email: user.email } });
+        res.status(200).json({ 
+          token, 
+          user: { 
+            id: user.id, 
+            name: user.name, 
+            email: user.email,
+            isPremium: Boolean(user.isPremium)
+          } 
+        });
       }
     );
   } catch (err) {
@@ -96,6 +112,35 @@ router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
+// Upgrade or toggle premium status
+router.post('/upgrade-premium', authMiddleware, async (req, res) => {
+  try {
+    const targetStatus = req.body.isPremium !== undefined ? Boolean(req.body.isPremium) : true;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { isPremium: targetStatus },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      message: targetStatus ? 'Successfully upgraded to Spendly Premium' : 'Premium plan updated',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        isPremium: Boolean(user.isPremium)
+      }
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
