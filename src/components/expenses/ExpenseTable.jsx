@@ -1,44 +1,76 @@
 import React from 'react';
+import { Receipt, SearchX } from 'lucide-react';
 import { ExpenseRow } from './ExpenseRow';
+import { NeumorphicCard } from '../ui/NeumorphicCard';
 
-export function ExpenseTable({ expenses, onEdit, onDelete }) {
+export function ExpenseTable({ expenses = [], onEdit, onDelete }) {
   if (expenses.length === 0) {
     return (
-      <div className="bg-card border border-border p-12 rounded-xl flex flex-col items-center justify-center text-center">
-        <span className="text-4xl mb-4">📭</span>
-        <h3 className="text-lg font-semibold text-textPrimary mb-1">No expenses found</h3>
-        <p className="text-muted text-sm max-w-sm">
-          No transactions match your current filters. Try adjusting them or add a new expense.
+      <NeumorphicCard className="p-12 flex flex-col items-center justify-center text-center">
+        <div className="w-14 h-14 rounded-3xl neu-icon-box flex items-center justify-center text-textSecondary/50 mb-3 bg-surface">
+          <SearchX className="w-7 h-7" />
+        </div>
+        <h3 className="text-base font-bold text-textPrimary mb-1">
+          No transactions match your filters
+        </h3>
+        <p className="text-xs text-textSecondary max-w-sm">
+          Try clearing search queries, expanding date ranges, or adding a new transaction.
         </p>
-      </div>
+      </NeumorphicCard>
     );
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden">
+    <NeumorphicCard p="p-0" className="overflow-hidden">
+      {/* Desktop Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[600px]">
+        <table className="w-full text-left border-collapse hidden md:table">
           <thead>
-            <tr className="bg-white/5 border-b border-border">
-              <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider w-32">Date</th>
-              <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider">Title</th>
-              <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider w-40">Category</th>
-              <th className="p-4 text-xs font-semibold text-muted uppercase tracking-wider text-right w-32">Amount</th>
-              <th className="p-4 w-24"></th>
+            <tr className="border-b border-border/40 bg-surface/50">
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider w-28">
+                Date
+              </th>
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider">
+                Title / Merchant
+              </th>
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider w-40">
+                Category
+              </th>
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider text-center w-28">
+                Type
+              </th>
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider text-right w-36">
+                Amount
+              </th>
+              <th className="p-4 text-[10px] font-bold text-textSecondary uppercase tracking-wider text-right w-24">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
-            {expenses.map(exp => (
-              <ExpenseRow 
-                key={exp.id} 
-                expense={exp} 
-                onEdit={onEdit} 
-                onDelete={onDelete} 
+            {expenses.map((exp) => (
+              <ExpenseRow
+                key={exp.id}
+                expense={exp}
+                onEdit={onEdit}
+                onDelete={onDelete}
               />
             ))}
           </tbody>
         </table>
       </div>
-    </div>
+
+      {/* Mobile Card Stack */}
+      <div className="md:hidden flex flex-col gap-3 p-4">
+        {expenses.map((exp) => (
+          <ExpenseRow
+            key={exp.id}
+            expense={exp}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+    </NeumorphicCard>
   );
 }

@@ -1,16 +1,21 @@
 import React from 'react';
+import { SummaryCard } from './SummaryCard';
 
 export function StatCard({ title, value, subValue, icon }) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex items-start justify-between">
+    <div className="bg-surface neu-card p-5 sm:p-6 flex items-start justify-between">
       <div>
-        <p className="text-sm font-medium text-muted mb-1">{title}</p>
-        <h3 className="text-2xl font-bold text-textPrimary">{value}</h3>
+        <p className="text-xs font-semibold uppercase tracking-wider text-textSecondary mb-1">
+          {title}
+        </p>
+        <h3 className="text-2xl font-extrabold text-textPrimary tracking-tight">
+          {value}
+        </h3>
         {subValue && (
-          <p className="text-sm mt-1 text-primary">{subValue}</p>
+          <p className="text-xs mt-1.5 text-primary font-bold">{subValue}</p>
         )}
       </div>
-      <div className="w-12 h-12 rounded-lg bg-white/5 flex items-center justify-center text-2xl">
+      <div className="w-12 h-12 rounded-2xl neu-icon-box flex items-center justify-center text-xl text-primary bg-primary/10 border border-primary/20">
         {icon}
       </div>
     </div>

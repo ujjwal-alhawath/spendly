@@ -1,47 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { ToastContainer } from '../ui/Toast';
 
 export function Layout() {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const location = useLocation();
-
-  // "Smooth page transition: 200ms fade on route change"
-  const [displayLocation, setDisplayLocation] = useState(location);
-  const [transitionStage, setTransitonStage] = useState('fadeIn');
-
-  useEffect(() => {
-    if (location !== displayLocation) {
-      setTransitonStage('fadeOut');
-    }
-  }, [location, displayLocation]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="flex h-screen w-full bg-background overflow-hidden text-textPrimary">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
-      <div className="flex-1 flex flex-col min-w-0">
+    <div className="min-h-screen bg-background flex flex-row overflow-x-hidden text-textPrimary">
+      {/* Toast Notifications */}
+      <ToastContainer />
+
+      {/* Sidebar Navigation */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+        {/* Topbar */}
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
-        
-        <main 
-          className={`flex-1 overflow-y-auto p-4 lg:p-8 transition-opacity duration-200 ${
-            transitionStage === 'fadeIn' ? 'opacity-100' : 'opacity-0'
-          }`}
-          onTransitionEnd={() => {
-            if (transitionStage === 'fadeOut') {
-              setDisplayLocation(location);
-              setTransitonStage('fadeIn');
-            }
-          }}
-        >
-          {/* We only render the outlet matching the displayed location so it stays rendered during fade */}
+
+        {/* Page Content */}
+        <main className="flex-1 px-4 lg:px-8 pb-12 pt-2 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
       </div>
-      
-      <ToastContainer />
     </div>
   );
 }

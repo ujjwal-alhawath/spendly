@@ -1,22 +1,24 @@
 import React from 'react';
+import { Sparkles } from 'lucide-react';
 
 const CHIPS = [
-  "Where am I overspending?",
-  "Compare my last 2 months",
-  "How can I save ₹5000 this month?",
-  "What's my biggest waste?"
+  'Where am I spending the most?',
+  'How can I save more this month?',
+  'Analyze my spending habits',
+  'Help me create a monthly budget',
 ];
 
 export function PromptChips({ onSelect }) {
   return (
-    <div className="flex flex-wrap gap-2 mt-4 max-w-3xl mx-auto w-full justify-center lg:justify-start">
-      {CHIPS.map(chip => (
+    <div className="flex flex-wrap gap-2.5 max-w-2xl mx-auto w-full justify-center">
+      {CHIPS.map((chip) => (
         <button
           key={chip}
           onClick={() => onSelect(chip)}
-          className="px-3 py-1.5 bg-card border border-border rounded-full text-xs font-medium text-muted hover:text-textPrimary hover:border-primary/50 transition-colors"
+          className="neu-btn px-4 py-2 rounded-full text-xs font-semibold text-textSecondary hover:text-textPrimary hover:border-primary/40 flex items-center gap-1.5 transition-all cursor-pointer group"
         >
-          {chip}
+          <Sparkles className="w-3 h-3 text-primary group-hover:scale-110 transition-transform" />
+          <span>{chip}</span>
         </button>
       ))}
     </div>
