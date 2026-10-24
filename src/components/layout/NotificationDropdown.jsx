@@ -11,25 +11,16 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { useExpenseStats } from '../../hooks/useExpenseStats';
-import { formatCurrency } from '../../utils/formatters';
 
 export function NotificationDropdown({ isOpen, onClose }) {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  const {
-    user,
-    expenses,
-    monthlyBudget,
-    currency,
-    notifications,
-    markNotificationAsRead,
-    markAllNotificationsAsRead,
-    clearNotifications,
-  } = useStore();
-
-  const stats = useExpenseStats(expenses, monthlyBudget);
+  const notifications = useStore((state) => state.notifications || []);
+  const markNotificationAsRead = useStore((state) => state.markNotificationAsRead);
+  const markAllNotificationsAsRead = useStore((state) => state.markAllNotificationsAsRead);
+  const clearNotifications = useStore((state) => state.clearNotifications);
+  const deleteNotification = useStore((state) => state.deleteNotification);
 
   // Close on click outside
   useEffect(() => {
@@ -53,73 +44,31 @@ export function NotificationDropdown({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Build real contextual notifications from stats if empty
-  const activeNotifications =
-    notifications && notifications.length > 0
-      ? notifications
-      : [
-          // Dynamic budget alert
-          ...(stats.budgetUsedPercent > 80
-            ? [
-                {
-                  id: 'notif-budget-warn',
-                  title: stats.budgetUsedPercent > 100 ? 'Budget Exceeded' : 'Budget Warning',
-                  message: `You have consumed ${stats.budgetUsedPercent.toFixed(0)}% of your monthly ${formatCurrency(monthlyBudget, currency)} target.`,
-                  type: 'warning',
-                  icon: AlertTriangle,
-                  link: '/budgets',
-                  time: 'Just now',
-                  read: false,
-                },
-              ]
-            : []),
-          // Top spending category
-          ...(stats.topCategory !== 'None'
-            ? [
-                {
-                  id: 'notif-top-cat',
-                  title: 'Top Category Insight',
-                  message: `${stats.topCategory} accounts for your largest expense (${formatCurrency(stats.topCategoryAmount, currency)}).`,
-                  type: 'info',
-                  icon: TrendingUp,
-                  link: '/analytics',
-                  time: 'Today',
-                  read: false,
-                },
-              ]
-            : []),
-          // AI Tip
-          {
-            id: 'notif-ai-tip',
-            title: 'Gemini AI Advisory Ready',
-            message: 'Ask Gemini AI how to optimize your savings and trim unnecessary subscriptions.',
-            type: 'ai',
-            icon: Sparkles,
-            link: '/chat',
-            time: '2 hours ago',
-            read: false,
-          },
-          // Account welcome
-          {
-            id: 'notif-welcome',
-            title: `Welcome, ${user?.name ? user.name.split(' ')[0] : 'friend'}!`,
-            message: 'Your personal finance workspace is active with soft neumorphic controls.',
-            type: 'success',
-            icon: CheckCircle2,
-            link: '/',
-            time: '1 day ago',
-            read: true,
-          },
-        ];
-
-  const unreadCount = activeNotifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleNotificationClick = (notif) => {
     markNotificationAsRead(notif.id);
     if (notif.link) {
       navigate(notif.link);
+      onClose();
     }
-    onClose();
+  };
+
+  const getNotificationIcon = (type) => {
+    switch (type) {
+      case 'warning':
+      case 'danger':
+        return AlertTriangle;
+      case 'ai':
+        return Sparkles;
+      case 'success':
+        return CheckCircle2;
+      case 'info':
+      case 'analytics':
+        return TrendingUp;
+      default:
+        return Bell;
+    }
   };
 
   return (
@@ -129,7 +78,7 @@ export function NotificationDropdown({ isOpen, onClose }) {
     >
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-border/40">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl neu-icon-box flex items-center justify-center text-primary bg-primary/10">
             <Bell className="w-4 h-4" />
           </div>
@@ -138,17 +87,20 @@ export function NotificationDropdown({ isOpen, onClose }) {
               Notifications
             </h3>
             <span className="text-[10px] text-textSecondary font-semibold">
-              {unreadCount > 0 ? `${unreadCount} unread alert${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
+              {unreadCount > 0
+                ? `${unreadCount} unread alert${unreadCount > 1 ? 's' : ''}`
+                : 'All caught up'}
             </span>
           </div>
         </div>
 
         {unreadCount > 0 && (
           <button
+            id="mark-all-read-btn"
             onClick={() => markAllNotificationsAsRead()}
-            className="neu-btn px-2.5 py-1 rounded-lg text-[10px] font-bold text-primary hover:text-primary-hover flex items-center gap-1 cursor-pointer"
+            className="neu-btn px-2.5 py-1 rounded-xl text-[10px] font-bold text-primary hover:text-primary-hover hover:scale-105 flex items-center gap-1 cursor-pointer transition-all shadow-neu-sm"
           >
-            <Check className="w-3 h-3" />
+            <Check className="w-3 h-3 stroke-[2.5]" />
             <span>Mark read</span>
           </button>
         )}
@@ -156,47 +108,58 @@ export function NotificationDropdown({ isOpen, onClose }) {
 
       {/* Notification List */}
       <div className="my-2 space-y-2 max-h-[320px] overflow-y-auto pr-1">
-        {activeNotifications.length === 0 ? (
-          <div className="py-8 text-center text-textSecondary flex flex-col items-center">
-            <Bell className="w-8 h-8 text-textSecondary/40 mb-2" />
-            <p className="text-xs font-semibold text-textPrimary">No notifications</p>
-            <p className="text-[10px] text-textSecondary mt-0.5">
-              Financial alerts and budget updates will appear here.
+        {notifications.length === 0 ? (
+          <div className="py-10 text-center text-textSecondary flex flex-col items-center justify-center">
+            <div className="w-12 h-12 rounded-2xl neu-inset flex items-center justify-center text-textSecondary/40 mb-3">
+              <Bell className="w-6 h-6 stroke-[1.5]" />
+            </div>
+            <p className="text-xs font-bold text-textPrimary">No notifications</p>
+            <p className="text-[11px] text-textSecondary mt-0.5 max-w-[210px] leading-relaxed">
+              You are all caught up! When you receive alerts or updates, they will appear here.
             </p>
           </div>
         ) : (
-          activeNotifications.map((notif) => {
-            const Icon = notif.icon || Bell;
-            const isWarning = notif.type === 'warning';
+          notifications.map((notif) => {
+            const Icon = getNotificationIcon(notif.type);
+            const isWarning = notif.type === 'warning' || notif.type === 'danger';
             const isAI = notif.type === 'ai';
+            const isSuccess = notif.type === 'success';
 
             return (
               <div
                 key={notif.id}
                 onClick={() => handleNotificationClick(notif)}
                 className={`p-3 rounded-2xl neu-inset transition-all cursor-pointer flex items-start gap-3 hover:bg-white/50 group relative
-                  ${notif.read ? 'opacity-70' : 'opacity-100 border border-primary/30'}`}
+                  ${notif.read ? 'opacity-65 bg-surface/50 border border-transparent' : 'opacity-100 bg-white/70 border border-primary/30'}`}
               >
+                {/* Icon box */}
                 <div
                   className={`w-9 h-9 rounded-xl neu-icon-box flex items-center justify-center shrink-0 mt-0.5
                     ${
                       isWarning
-                        ? 'text-warning bg-warning/15'
+                        ? 'text-amber-500 bg-amber-500/15'
                         : isAI
                         ? 'text-secondary bg-secondary/15'
-                        : 'text-primary bg-primary/15'
+                        : isSuccess
+                        ? 'text-primary bg-primary/15'
+                        : 'text-blue-500 bg-blue-500/15'
                     }`}
                 >
                   <Icon className="w-4 h-4" />
                 </div>
 
-                <div className="flex-1 min-w-0">
+                {/* Content */}
+                <div className="flex-1 min-w-0 pr-1">
                   <div className="flex items-center justify-between gap-1">
-                    <h4 className="text-xs font-bold text-textPrimary truncate group-hover:text-primary transition-colors">
+                    <h4
+                      className={`text-xs truncate transition-colors group-hover:text-primary ${
+                        notif.read ? 'font-semibold text-textSecondary' : 'font-extrabold text-textPrimary'
+                      }`}
+                    >
                       {notif.title}
                     </h4>
-                    <span className="text-[9px] text-textSecondary whitespace-nowrap">
-                      {notif.time}
+                    <span className="text-[9px] text-textSecondary/70 shrink-0 whitespace-nowrap">
+                      {notif.time || 'Recently'}
                     </span>
                   </div>
                   <p className="text-[11px] text-textSecondary leading-snug mt-0.5 line-clamp-2">
@@ -204,9 +167,36 @@ export function NotificationDropdown({ isOpen, onClose }) {
                   </p>
                 </div>
 
-                {!notif.read && (
-                  <span className="w-2 h-2 rounded-full bg-primary shrink-0 self-center" />
-                )}
+                {/* Quick actions: Mark Read & Delete */}
+                <div className="flex items-center gap-1 shrink-0 self-center">
+                  {!notif.read && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markNotificationAsRead(notif.id);
+                      }}
+                      title="Mark as read"
+                      className="w-6 h-6 rounded-lg neu-btn flex items-center justify-center text-primary hover:text-primary-hover hover:scale-110 transition-all cursor-pointer"
+                    >
+                      <Check className="w-3 h-3 stroke-[2.5]" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteNotification(notif.id);
+                    }}
+                    title="Remove alert"
+                    className="w-6 h-6 rounded-lg neu-btn flex items-center justify-center text-textSecondary/50 hover:text-danger hover:scale-110 transition-all cursor-pointer opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+
+                  {!notif.read && (
+                    <span className="w-2 h-2 rounded-full bg-primary shrink-0 ml-0.5" />
+                  )}
+                </div>
               </div>
             );
           })
@@ -216,11 +206,14 @@ export function NotificationDropdown({ isOpen, onClose }) {
       {/* Footer */}
       <div className="pt-2 border-t border-border/40 flex items-center justify-between">
         <button
-          onClick={() => {
-            clearNotifications();
-            onClose();
-          }}
-          className="text-[10px] text-textSecondary hover:text-danger font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+          id="clear-all-notif-btn"
+          disabled={notifications.length === 0}
+          onClick={() => clearNotifications()}
+          className={`text-[10px] font-semibold flex items-center gap-1 transition-colors ${
+            notifications.length === 0
+              ? 'text-textSecondary/30 cursor-not-allowed'
+              : 'text-textSecondary hover:text-danger cursor-pointer'
+          }`}
         >
           <Trash2 className="w-3 h-3" />
           <span>Clear all</span>

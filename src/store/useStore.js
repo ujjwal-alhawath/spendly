@@ -49,6 +49,68 @@ export const generateDemoTransactions = () => {
   ];
 };
 
+// Seed notifications for Demo User (Alex Morgan)
+export const generateDemoNotifications = (user) => [
+  {
+    id: 'demo-notif-budget',
+    title: 'Budget Alert (77% Used)',
+    message: 'You have spent ₹26,998 of your ₹35,000 monthly target. 8 days remaining in this cycle.',
+    type: 'warning',
+    time: '15 min ago',
+    read: false,
+    link: '/budgets',
+  },
+  {
+    id: 'demo-notif-topcat',
+    title: 'Top Category: Food & Dining',
+    message: 'Food represents your highest category this month with ₹8,700 across 3 transactions.',
+    type: 'info',
+    time: '2 hours ago',
+    read: false,
+    link: '/analytics',
+  },
+  {
+    id: 'demo-notif-ai',
+    title: 'Gemini AI Advisory Ready',
+    message: 'Ask Gemini AI how to optimize recurring subscriptions and maximize monthly savings.',
+    type: 'ai',
+    time: '5 hours ago',
+    read: false,
+    link: '/chat',
+  },
+  {
+    id: 'demo-notif-welcome',
+    title: `Welcome, ${user?.name ? user.name.split(' ')[0] : 'Alex'}!`,
+    message: 'Your personal finance workspace is active with soft neumorphic controls.',
+    type: 'success',
+    time: '1 day ago',
+    read: true,
+    link: '/',
+  },
+];
+
+// Seed notifications for a New User
+export const generateInitialUserNotifications = (user) => [
+  {
+    id: 'welcome-' + Date.now(),
+    title: `Welcome, ${user?.name ? user.name.split(' ')[0] : 'friend'}!`,
+    message: 'Your personal finance workspace is ready. Add your first transaction to get started.',
+    type: 'success',
+    time: 'Just now',
+    read: false,
+    link: '/expenses',
+  },
+  {
+    id: 'ai-ready-' + Date.now(),
+    title: 'Gemini AI Advisor Ready',
+    message: 'Connect your financial questions with Gemini AI to get automated budgeting insights.',
+    type: 'ai',
+    time: 'Just now',
+    read: false,
+    link: '/chat',
+  },
+];
+
 // Helper to get local storage key for a user
 const getUserKey = (user) => {
   if (!user) return 'guest';
@@ -108,8 +170,21 @@ export const useStore = create(
         let userBudget = 35000;
         let userCatBudgets = DEFAULT_CATEGORY_BUDGETS;
         let userChat = [];
+        let userNotifications = null;
 
-        // 1. Try to fetch this user's real transactions from backend MongoDB
+        // 1. Try to load this user's isolated local preferences/cache
+        const cached = loadScopedUserData(userKey);
+        if (cached) {
+          userExpenses = cached.expenses || [];
+          userBudget = cached.monthlyBudget || 35000;
+          userCatBudgets = cached.categoryBudgets || DEFAULT_CATEGORY_BUDGETS;
+          userChat = cached.chatHistory || [];
+          if (Array.isArray(cached.notifications)) {
+            userNotifications = cached.notifications;
+          }
+        }
+
+        // 2. Try to fetch real transactions from backend MongoDB
         if (token && token !== 'demo-token-12345') {
           try {
             const res = await fetch(`${API_BASE}/expenses`, {
@@ -126,17 +201,17 @@ export const useStore = create(
           }
         }
 
-        // 2. If backend had no records or was offline, check user's isolated local storage
-        if (userExpenses.length === 0) {
-          const cached = loadScopedUserData(userKey);
-          if (cached) {
-            userExpenses = cached.expenses || [];
-            userBudget = cached.monthlyBudget || 35000;
-            userCatBudgets = cached.categoryBudgets || DEFAULT_CATEGORY_BUDGETS;
-            userChat = cached.chatHistory || [];
-          } else if (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
-            // Only demo account gets pre-populated demo data
-            userExpenses = generateDemoTransactions();
+        // 3. Fallbacks for demo user
+        if (userExpenses.length === 0 && (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest')) {
+          userExpenses = generateDemoTransactions();
+        }
+
+        // 4. Initialize notifications if not already saved for this user
+        if (userNotifications === null) {
+          if (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
+            userNotifications = generateDemoNotifications(userData);
+          } else {
+            userNotifications = generateInitialUserNotifications(userData);
           }
         }
 
@@ -148,6 +223,7 @@ export const useStore = create(
           monthlyBudget: userBudget,
           categoryBudgets: userCatBudgets,
           chatHistory: userChat,
+          notifications: userNotifications,
         });
 
         // Save active state to user's scoped storage
@@ -156,11 +232,13 @@ export const useStore = create(
           monthlyBudget: userBudget,
           categoryBudgets: userCatBudgets,
           chatHistory: userChat,
+          notifications: userNotifications,
         });
       },
 
       signup: async (userData, token) => {
         const userKey = getUserKey(userData);
+        const userNotifs = generateInitialUserNotifications(userData);
 
         // A brand new user account starts with clean 0 transactions!
         const cleanState = {
@@ -168,6 +246,7 @@ export const useStore = create(
           monthlyBudget: 35000,
           categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
           chatHistory: [],
+          notifications: userNotifs,
         };
 
         saveScopedUserData(userKey, cleanState);
@@ -180,22 +259,12 @@ export const useStore = create(
           monthlyBudget: 35000,
           categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
           chatHistory: [],
-          notifications: [
-            {
-              id: 'welcome-' + Date.now(),
-              title: `Welcome, ${userData.name}!`,
-              message: 'Your clean personal finance workspace is ready. Add your first transaction to get started.',
-              type: 'success',
-              time: 'Just now',
-              read: false,
-              link: '/expenses',
-            },
-          ],
+          notifications: userNotifs,
         });
       },
 
       logout: () => {
-        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         if (user) {
           // Persist current user's state before logout
           saveScopedUserData(getUserKey(user), {
@@ -203,6 +272,7 @@ export const useStore = create(
             monthlyBudget,
             categoryBudgets,
             chatHistory,
+            notifications,
           });
         }
 
@@ -232,7 +302,7 @@ export const useStore = create(
       // ==========================================
 
       addExpense: async (expenseData) => {
-        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
         const newId = generateId();
@@ -251,6 +321,7 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets,
           chatHistory,
+          notifications,
         });
 
         // Sync with MongoDB backend if authenticated
@@ -280,7 +351,7 @@ export const useStore = create(
       },
 
       editExpense: async (id, updatedData) => {
-        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
         const updatedExpenses = expenses.map((exp) =>
@@ -293,6 +364,7 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets,
           chatHistory,
+          notifications,
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -312,7 +384,7 @@ export const useStore = create(
       },
 
       deleteExpense: async (id) => {
-        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
         const updatedExpenses = expenses.filter(
@@ -325,6 +397,7 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets,
           chatHistory,
+          notifications,
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -340,7 +413,7 @@ export const useStore = create(
       },
 
       clearAllExpenses: async () => {
-        const { user, token, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, token, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
         set({ expenses: [] });
@@ -349,6 +422,7 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets,
           chatHistory,
+          notifications,
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -364,16 +438,18 @@ export const useStore = create(
       },
 
       loadDemoData: () => {
-        const { user, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, categoryBudgets, chatHistory } = get();
         const userKey = getUserKey(user);
         const demoData = generateDemoTransactions();
+        const demoNotifs = generateDemoNotifications(user);
 
-        set({ expenses: demoData, monthlyBudget: 35000 });
+        set({ expenses: demoData, monthlyBudget: 35000, notifications: demoNotifs });
         saveScopedUserData(userKey, {
           expenses: demoData,
           monthlyBudget: 35000,
           categoryBudgets,
           chatHistory,
+          notifications: demoNotifs,
         });
       },
 
@@ -382,7 +458,7 @@ export const useStore = create(
       // ==========================================
 
       setBudget: (amount) => {
-        const { user, expenses, categoryBudgets, chatHistory } = get();
+        const { user, expenses, categoryBudgets, chatHistory, notifications } = get();
         const newBudget = amount > 0 ? Number(amount) : 35000;
         set({ monthlyBudget: newBudget });
         saveScopedUserData(getUserKey(user), {
@@ -390,11 +466,12 @@ export const useStore = create(
           monthlyBudget: newBudget,
           categoryBudgets,
           chatHistory,
+          notifications,
         });
       },
 
       setCategoryBudget: (category, amount) => {
-        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const newCatBudgets = {
           ...categoryBudgets,
           [category]: Number(amount) || 0,
@@ -405,6 +482,7 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets: newCatBudgets,
           chatHistory,
+          notifications,
         });
       },
 
@@ -415,7 +493,7 @@ export const useStore = create(
       // ==========================================
 
       addMessage: (message) => {
-        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const newChat = [...chatHistory, message];
         set({ chatHistory: newChat });
         saveScopedUserData(getUserKey(user), {
@@ -423,48 +501,107 @@ export const useStore = create(
           monthlyBudget,
           categoryBudgets,
           chatHistory: newChat,
+          notifications,
         });
       },
 
       clearChat: () => {
-        const { user, expenses, monthlyBudget, categoryBudgets } = get();
+        const { user, expenses, monthlyBudget, categoryBudgets, notifications } = get();
         set({ chatHistory: [] });
         saveScopedUserData(getUserKey(user), {
           expenses,
           monthlyBudget,
           categoryBudgets,
           chatHistory: [],
+          notifications,
         });
       },
 
       // ==========================================
-      // NOTIFICATIONS
+      // NOTIFICATIONS (PERSISTED & USER-SCOPED)
       // ==========================================
 
-      markNotificationAsRead: (id) =>
-        set((state) => ({
-          notifications: state.notifications.map((n) =>
-            n.id === id ? { ...n, read: true } : n
-          ),
-        })),
+      markNotificationAsRead: (id) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
+        const updated = (notifications || []).map((n) =>
+          n.id === id ? { ...n, read: true } : n
+        );
+        set({ notifications: updated });
+        if (user) {
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications: updated,
+          });
+        }
+      },
 
-      markAllNotificationsAsRead: () =>
-        set((state) => ({
-          notifications: state.notifications.map((n) => ({ ...n, read: true })),
-        })),
+      markAllNotificationsAsRead: () => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
+        const updated = (notifications || []).map((n) => ({ ...n, read: true }));
+        set({ notifications: updated });
+        if (user) {
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications: updated,
+          });
+        }
+      },
 
-      clearNotifications: () =>
-        set(() => ({
-          notifications: [],
-        })),
+      clearNotifications: () => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        set({ notifications: [] });
+        if (user) {
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications: [],
+          });
+        }
+      },
 
-      addNotification: (notification) =>
-        set((state) => ({
-          notifications: [
-            { id: 'notif-' + Date.now(), read: false, time: 'Just now', ...notification },
-            ...state.notifications,
-          ],
-        })),
+      deleteNotification: (id) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
+        const updated = (notifications || []).filter((n) => n.id !== id);
+        set({ notifications: updated });
+        if (user) {
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications: updated,
+          });
+        }
+      },
+
+      addNotification: (notification) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
+        const newNotif = {
+          id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+          read: false,
+          time: 'Just now',
+          ...notification,
+        };
+        const updated = [newNotif, ...(notifications || [])];
+        set({ notifications: updated });
+        if (user) {
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications: updated,
+          });
+        }
+      },
     }),
     {
       name: 'spendly-session-v3',

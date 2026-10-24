@@ -127,8 +127,10 @@ export function Topbar({ onMenuClick }) {
               aria-label="Toggle notifications"
             >
               <Bell className="w-4 h-4" />
-              {/* Unread dot or count badge */}
-              <span className="w-2.5 h-2.5 rounded-full bg-primary absolute top-2 right-2 ring-2 ring-surface animate-pulse"></span>
+              {/* Unread indicator dot */}
+              {unreadNotificationsCount > 0 && (
+                <span className="w-2.5 h-2.5 rounded-full bg-primary absolute top-2 right-2 ring-2 ring-surface animate-pulse" />
+              )}
             </button>
 
             {/* Notification Dropdown Panel */}
