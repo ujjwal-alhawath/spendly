@@ -12,16 +12,21 @@ import {
 import { useStore } from '../../store/useStore';
 import { UpgradeModal } from '../premium/UpgradeModal';
 import { AddModal } from '../expenses/AddModal';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export function Topbar({ onMenuClick }) {
   const location = useLocation();
   const user = useStore((state) => state.user);
+  const notifications = useStore((state) => state.notifications || []);
   const isPremium = Boolean(user?.isPremium);
 
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateRange, setDateRange] = useState('This Month');
+
+  const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   const getPageInfo = () => {
     switch (location.pathname) {
@@ -89,7 +94,7 @@ export function Topbar({ onMenuClick }) {
         </div>
 
         {/* Right Side: Search, Date Selector, Notifications, Add Transaction & Pro */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 relative">
           {/* Quick Search Input */}
           <div className="relative hidden md:flex items-center">
             <Search className="w-4 h-4 absolute left-3.5 text-textSecondary pointer-events-none" />
@@ -108,14 +113,30 @@ export function Topbar({ onMenuClick }) {
             <span>{dateRange}</span>
           </div>
 
-          {/* Notification Button */}
-          <button
-            className="neu-btn w-10 h-10 rounded-2xl flex items-center justify-center text-textSecondary hover:text-textPrimary transition-all relative cursor-pointer"
-            title="Notifications"
-          >
-            <Bell className="w-4 h-4" />
-            <span className="w-2 h-2 rounded-full bg-primary absolute top-2.5 right-2.5 ring-2 ring-surface"></span>
-          </button>
+          {/* Notification Button & Dropdown Container */}
+          <div className="relative">
+            <button
+              id="notification-bell-btn"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className={`neu-btn w-10 h-10 rounded-2xl flex items-center justify-center transition-all relative cursor-pointer ${
+                isNotificationOpen
+                  ? 'neu-inset text-primary border border-primary/30'
+                  : 'text-textSecondary hover:text-textPrimary'
+              }`}
+              title="Notifications & Alerts"
+              aria-label="Toggle notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {/* Unread dot or count badge */}
+              <span className="w-2.5 h-2.5 rounded-full bg-primary absolute top-2 right-2 ring-2 ring-surface animate-pulse"></span>
+            </button>
+
+            {/* Notification Dropdown Panel */}
+            <NotificationDropdown
+              isOpen={isNotificationOpen}
+              onClose={() => setIsNotificationOpen(false)}
+            />
+          </div>
 
           {/* Pro Badge / Upgrade Button */}
           {isPremium ? (

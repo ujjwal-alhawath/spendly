@@ -2,16 +2,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { generateId } from '../utils/formatters';
 
-// Generate realistic seed transactions centered around current date
-const generateInitialTransactions = () => {
+const API_BASE = 'http://localhost:5000/api';
+
+// Generate realistic seed transactions for DEMO / SAMPLE only
+export const generateDemoTransactions = () => {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  
-  // Helper to format date string YYYY-MM-DD
   const d = (day) => `${year}-${month}-${String(day).padStart(2, '0')}`;
-  
-  // Previous months
+
   const prevMonthDate = new Date(year, now.getMonth() - 1, 15);
   const pYear = prevMonthDate.getFullYear();
   const pMonth = String(prevMonthDate.getMonth() + 1).padStart(2, '0');
@@ -39,129 +38,436 @@ const generateInitialTransactions = () => {
     { id: generateId(), title: 'Electricity & Utility Bill', amount: 3800, category: 'Bills', type: 'expense', date: d(19), note: 'Power & water', createdAt: Date.now() - 500000 },
     { id: generateId(), title: 'Gourmet Bistro Dinner', amount: 2600, category: 'Food', type: 'expense', date: d(21), note: 'Dinner with family', createdAt: Date.now() - 400000 },
 
-    // Previous Month (1 month ago)
+    // Previous Months
     { id: generateId(), title: 'Tech Corp Monthly Salary', amount: 85000, category: 'Salary', type: 'income', date: pd(1), note: 'Salary', createdAt: Date.now() - 3000000 },
     { id: generateId(), title: 'Supermarket Groceries', amount: 7200, category: 'Food', type: 'expense', date: pd(5), note: '', createdAt: Date.now() - 2900000 },
     { id: generateId(), title: 'Utilities & Power', amount: 3600, category: 'Bills', type: 'expense', date: pd(10), note: '', createdAt: Date.now() - 2800000 },
     { id: generateId(), title: 'Apparel & Footwear', amount: 6400, category: 'Shopping', type: 'expense', date: pd(15), note: '', createdAt: Date.now() - 2700000 },
-    { id: generateId(), title: 'Car Maintenance & Service', amount: 4500, category: 'Transport', type: 'expense', date: pd(22), note: '', createdAt: Date.now() - 2600000 },
 
-    // 2 Months ago
     { id: generateId(), title: 'Tech Corp Monthly Salary', amount: 82000, category: 'Salary', type: 'income', date: p2d(1), note: 'Salary', createdAt: Date.now() - 6000000 },
     { id: generateId(), title: 'Groceries & Household', amount: 6900, category: 'Food', type: 'expense', date: p2d(6), note: '', createdAt: Date.now() - 5900000 },
-    { id: generateId(), title: 'Online Electronics Store', amount: 11200, category: 'Shopping', type: 'expense', date: p2d(14), note: '', createdAt: Date.now() - 5800000 },
-    { id: generateId(), title: 'Health Insurance Premium', amount: 4200, category: 'Health', type: 'expense', date: p2d(20), note: '', createdAt: Date.now() - 5700000 },
   ];
+};
+
+// Helper to get local storage key for a user
+const getUserKey = (user) => {
+  if (!user) return 'guest';
+  return user.id || user._id || user.email || 'guest';
+};
+
+// Helper to load isolated user data from localStorage
+const loadScopedUserData = (userKey) => {
+  try {
+    const raw = localStorage.getItem(`spendly_user_${userKey}`);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error('Error loading scoped user data:', e);
+  }
+  return null;
+};
+
+// Helper to save isolated user data into localStorage
+const saveScopedUserData = (userKey, data) => {
+  try {
+    localStorage.setItem(`spendly_user_${userKey}`, JSON.stringify(data));
+  } catch (e) {
+    console.error('Error saving scoped user data:', e);
+  }
+};
+
+const DEFAULT_CATEGORY_BUDGETS = {
+  Food: 8000,
+  Shopping: 10000,
+  Transport: 5000,
+  Bills: 6000,
+  Entertainment: 3000,
+  Health: 4000,
+  Other: 2000,
 };
 
 export const useStore = create(
   persist(
     (set, get) => ({
-      user: {
-        name: 'Alex Morgan',
-        email: 'alex.morgan@spendly.app',
-        isPremium: true,
-      },
-      token: 'demo-token-active',
-      isAuthenticated: true,
-      currency: 'INR', // 'INR' | 'USD' | 'EUR' | 'GBP'
-      expenses: generateInitialTransactions(),
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      currency: 'INR',
+      expenses: [],
       monthlyBudget: 35000,
-      categoryBudgets: {
-        Food: 8000,
-        Shopping: 10000,
-        Transport: 5000,
-        Bills: 6000,
-        Entertainment: 3000,
-        Health: 4000,
-        Other: 2000,
-      },
+      categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
       chatHistory: [],
+      notifications: [],
 
-      // Auth actions
-      login: (userData, token) =>
-        set({ user: userData, token, isAuthenticated: true }),
-      signup: (userData, token) =>
-        set({ user: userData, token, isAuthenticated: true }),
-      logout: () =>
-        set({ user: null, token: null, isAuthenticated: false }),
+      // ==========================================
+      // AUTHENTICATION & MULTI-USER ISOLATION
+      // ==========================================
+
+      login: async (userData, token) => {
+        const userKey = getUserKey(userData);
+        let userExpenses = [];
+        let userBudget = 35000;
+        let userCatBudgets = DEFAULT_CATEGORY_BUDGETS;
+        let userChat = [];
+
+        // 1. Try to fetch this user's real transactions from backend MongoDB
+        if (token && token !== 'demo-token-12345') {
+          try {
+            const res = await fetch(`${API_BASE}/expenses`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data)) {
+                userExpenses = data;
+              }
+            }
+          } catch (e) {
+            console.warn('Backend expenses fetch failed, loading local cached data:', e);
+          }
+        }
+
+        // 2. If backend had no records or was offline, check user's isolated local storage
+        if (userExpenses.length === 0) {
+          const cached = loadScopedUserData(userKey);
+          if (cached) {
+            userExpenses = cached.expenses || [];
+            userBudget = cached.monthlyBudget || 35000;
+            userCatBudgets = cached.categoryBudgets || DEFAULT_CATEGORY_BUDGETS;
+            userChat = cached.chatHistory || [];
+          } else if (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
+            // Only demo account gets pre-populated demo data
+            userExpenses = generateDemoTransactions();
+          }
+        }
+
+        set({
+          user: userData,
+          token,
+          isAuthenticated: true,
+          expenses: userExpenses,
+          monthlyBudget: userBudget,
+          categoryBudgets: userCatBudgets,
+          chatHistory: userChat,
+        });
+
+        // Save active state to user's scoped storage
+        saveScopedUserData(userKey, {
+          expenses: userExpenses,
+          monthlyBudget: userBudget,
+          categoryBudgets: userCatBudgets,
+          chatHistory: userChat,
+        });
+      },
+
+      signup: async (userData, token) => {
+        const userKey = getUserKey(userData);
+
+        // A brand new user account starts with clean 0 transactions!
+        const cleanState = {
+          expenses: [],
+          monthlyBudget: 35000,
+          categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
+          chatHistory: [],
+        };
+
+        saveScopedUserData(userKey, cleanState);
+
+        set({
+          user: userData,
+          token,
+          isAuthenticated: true,
+          expenses: [],
+          monthlyBudget: 35000,
+          categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
+          chatHistory: [],
+          notifications: [
+            {
+              id: 'welcome-' + Date.now(),
+              title: `Welcome, ${userData.name}!`,
+              message: 'Your clean personal finance workspace is ready. Add your first transaction to get started.',
+              type: 'success',
+              time: 'Just now',
+              read: false,
+              link: '/expenses',
+            },
+          ],
+        });
+      },
+
+      logout: () => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        if (user) {
+          // Persist current user's state before logout
+          saveScopedUserData(getUserKey(user), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+          });
+        }
+
+        // Clear active session completely so next user doesn't see old data
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          expenses: [],
+          chatHistory: [],
+          notifications: [],
+        });
+      },
+
       setPremium: (isPremium = true) =>
         set((state) => ({
           user: state.user ? { ...state.user, isPremium } : null,
         })),
+
       updateUser: (userData) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : userData,
         })),
 
-      // Preferences
+      // ==========================================
+      // TRANSACTIONS CRUD (USER-SCOPED & MONGO SYNC)
+      // ==========================================
+
+      addExpense: async (expenseData) => {
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const userKey = getUserKey(user);
+
+        const newId = generateId();
+        const localNewExpense = {
+          ...expenseData,
+          type: expenseData.type || 'expense',
+          id: newId,
+          createdAt: Date.now(),
+        };
+
+        const updatedExpenses = [localNewExpense, ...expenses];
+
+        set({ expenses: updatedExpenses });
+        saveScopedUserData(userKey, {
+          expenses: updatedExpenses,
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory,
+        });
+
+        // Sync with MongoDB backend if authenticated
+        if (token && token !== 'demo-token-12345') {
+          try {
+            const res = await fetch(`${API_BASE}/expenses`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(expenseData),
+            });
+            if (res.ok) {
+              const saved = await res.json();
+              // Update id with MongoDB _id
+              set((state) => ({
+                expenses: state.expenses.map((e) =>
+                  e.id === newId ? { ...e, id: saved.id, _id: saved.id } : e
+                ),
+              }));
+            }
+          } catch (e) {
+            console.warn('Backend sync failed, saved locally:', e);
+          }
+        }
+      },
+
+      editExpense: async (id, updatedData) => {
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const userKey = getUserKey(user);
+
+        const updatedExpenses = expenses.map((exp) =>
+          exp.id === id || exp._id === id ? { ...exp, ...updatedData } : exp
+        );
+
+        set({ expenses: updatedExpenses });
+        saveScopedUserData(userKey, {
+          expenses: updatedExpenses,
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory,
+        });
+
+        if (token && token !== 'demo-token-12345') {
+          try {
+            await fetch(`${API_BASE}/expenses/${id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(updatedData),
+            });
+          } catch (e) {
+            console.warn('Backend update failed:', e);
+          }
+        }
+      },
+
+      deleteExpense: async (id) => {
+        const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const userKey = getUserKey(user);
+
+        const updatedExpenses = expenses.filter(
+          (exp) => exp.id !== id && exp._id !== id
+        );
+
+        set({ expenses: updatedExpenses });
+        saveScopedUserData(userKey, {
+          expenses: updatedExpenses,
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory,
+        });
+
+        if (token && token !== 'demo-token-12345') {
+          try {
+            await fetch(`${API_BASE}/expenses/${id}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch (e) {
+            console.warn('Backend delete failed:', e);
+          }
+        }
+      },
+
+      clearAllExpenses: async () => {
+        const { user, token, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const userKey = getUserKey(user);
+
+        set({ expenses: [] });
+        saveScopedUserData(userKey, {
+          expenses: [],
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory,
+        });
+
+        if (token && token !== 'demo-token-12345') {
+          try {
+            await fetch(`${API_BASE}/expenses`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` },
+            });
+          } catch (e) {
+            console.warn('Backend clear failed:', e);
+          }
+        }
+      },
+
+      loadDemoData: () => {
+        const { user, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const userKey = getUserKey(user);
+        const demoData = generateDemoTransactions();
+
+        set({ expenses: demoData, monthlyBudget: 35000 });
+        saveScopedUserData(userKey, {
+          expenses: demoData,
+          monthlyBudget: 35000,
+          categoryBudgets,
+          chatHistory,
+        });
+      },
+
+      // ==========================================
+      // BUDGETS & PREFERENCES
+      // ==========================================
+
+      setBudget: (amount) => {
+        const { user, expenses, categoryBudgets, chatHistory } = get();
+        const newBudget = amount > 0 ? Number(amount) : 35000;
+        set({ monthlyBudget: newBudget });
+        saveScopedUserData(getUserKey(user), {
+          expenses,
+          monthlyBudget: newBudget,
+          categoryBudgets,
+          chatHistory,
+        });
+      },
+
+      setCategoryBudget: (category, amount) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const newCatBudgets = {
+          ...categoryBudgets,
+          [category]: Number(amount) || 0,
+        };
+        set({ categoryBudgets: newCatBudgets });
+        saveScopedUserData(getUserKey(user), {
+          expenses,
+          monthlyBudget,
+          categoryBudgets: newCatBudgets,
+          chatHistory,
+        });
+      },
+
       setCurrency: (currency) => set({ currency }),
 
-      // Transaction CRUD
-      addExpense: (expenseData) =>
-        set((state) => ({
-          expenses: [
-            {
-              ...expenseData,
-              type: expenseData.type || 'expense',
-              id: generateId(),
-              createdAt: Date.now(),
-            },
-            ...state.expenses,
-          ],
-        })),
+      // ==========================================
+      // CHAT HISTORY
+      // ==========================================
 
-      editExpense: (id, updatedData) =>
+      addMessage: (message) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory } = get();
+        const newChat = [...chatHistory, message];
+        set({ chatHistory: newChat });
+        saveScopedUserData(getUserKey(user), {
+          expenses,
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory: newChat,
+        });
+      },
+
+      clearChat: () => {
+        const { user, expenses, monthlyBudget, categoryBudgets } = get();
+        set({ chatHistory: [] });
+        saveScopedUserData(getUserKey(user), {
+          expenses,
+          monthlyBudget,
+          categoryBudgets,
+          chatHistory: [],
+        });
+      },
+
+      // ==========================================
+      // NOTIFICATIONS
+      // ==========================================
+
+      markNotificationAsRead: (id) =>
         set((state) => ({
-          expenses: state.expenses.map((exp) =>
-            exp.id === id ? { ...exp, ...updatedData } : exp
+          notifications: state.notifications.map((n) =>
+            n.id === id ? { ...n, read: true } : n
           ),
         })),
 
-      deleteExpense: (id) =>
+      markAllNotificationsAsRead: () =>
         set((state) => ({
-          expenses: state.expenses.filter((exp) => exp.id !== id),
+          notifications: state.notifications.map((n) => ({ ...n, read: true })),
         })),
 
-      // Budget actions
-      setBudget: (amount) =>
+      clearNotifications: () =>
         set(() => ({
-          monthlyBudget: amount > 0 ? Number(amount) : 35000,
+          notifications: [],
         })),
 
-      setCategoryBudget: (category, amount) =>
+      addNotification: (notification) =>
         set((state) => ({
-          categoryBudgets: {
-            ...state.categoryBudgets,
-            [category]: Number(amount) || 0,
-          },
-        })),
-
-      // Reset / Demo actions
-      loadDemoData: () =>
-        set(() => ({
-          expenses: generateInitialTransactions(),
-          monthlyBudget: 35000,
-        })),
-
-      clearAllExpenses: () =>
-        set(() => ({
-          expenses: [],
-        })),
-
-      // Chat history
-      addMessage: (message) =>
-        set((state) => ({
-          chatHistory: [...state.chatHistory, message],
-        })),
-
-      clearChat: () =>
-        set(() => ({
-          chatHistory: [],
+          notifications: [
+            { id: 'notif-' + Date.now(), read: false, time: 'Just now', ...notification },
+            ...state.notifications,
+          ],
         })),
     }),
     {
-      name: 'spendly-storage-neu-v1',
+      name: 'spendly-session-v3',
     }
   )
 );
