@@ -182,6 +182,9 @@ export const useStore = create(
           if (Array.isArray(cached.notifications)) {
             userNotifications = cached.notifications;
           }
+          if (cached.isPremium !== undefined && userData && userData.isPremium === undefined) {
+            userData.isPremium = cached.isPremium;
+          }
         }
 
         // 2. Try to fetch real transactions from backend MongoDB
@@ -287,10 +290,21 @@ export const useStore = create(
         });
       },
 
-      setPremium: (isPremium = true) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, isPremium } : null,
-        })),
+      setPremium: (isPremium = true) => {
+        const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
+        const updatedUser = user ? { ...user, isPremium } : null;
+        set({ user: updatedUser });
+        if (updatedUser) {
+          saveScopedUserData(getUserKey(updatedUser), {
+            expenses,
+            monthlyBudget,
+            categoryBudgets,
+            chatHistory,
+            notifications,
+            isPremium,
+          });
+        }
+      },
 
       updateUser: (userData) =>
         set((state) => ({

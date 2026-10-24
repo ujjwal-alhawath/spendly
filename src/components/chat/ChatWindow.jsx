@@ -9,6 +9,8 @@ import { NeumorphicCard } from '../ui/NeumorphicCard';
 
 export function ChatWindow() {
   const chatHistory = useStore((state) => state.chatHistory);
+  const user = useStore((state) => state.user);
+  const isPremium = Boolean(user?.isPremium);
   const { sendMessage, isTyping } = useAIChat();
   const [inputValue, setInputValue] = useState('');
 
@@ -70,13 +72,17 @@ export function ChatWindow() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              disabled={isTyping}
-              placeholder="Ask anything about your spending or budget..."
+              disabled={!isPremium || isTyping}
+              placeholder={
+                !isPremium
+                  ? 'AI Financial Advisor is locked. Upgrade to Pro to chat...'
+                  : 'Ask anything about your spending or budget...'
+              }
               className="w-full bg-surface neu-inset text-textPrimary placeholder:text-textSecondary/60 rounded-full pl-6 pr-14 py-3.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={!inputValue.trim() || isTyping}
+              disabled={!isPremium || !inputValue.trim() || isTyping}
               className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 neu-btn-primary rounded-full flex items-center justify-center text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-neu-accent active:scale-95 transition-all"
               aria-label="Send message"
             >

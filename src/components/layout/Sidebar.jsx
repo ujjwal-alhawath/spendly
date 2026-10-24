@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Crown,
   Wallet,
+  Lock,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { UpgradeModal } from '../premium/UpgradeModal';
@@ -30,7 +31,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       to: '/chat',
       label: 'AI Advisor',
       icon: Sparkles,
-      badge: isPremium ? 'PRO' : 'PRO',
+      badge: isPremium ? 'PRO' : 'LOCKED',
       isPro: true,
     },
     { to: '/settings', label: 'Settings', icon: Settings },
@@ -118,9 +119,16 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                   `}
                   title={isCollapsed ? link.label : undefined}
                 >
-                  <Icon
-                    className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110`}
-                  />
+                  <div className="relative shrink-0 flex items-center justify-center">
+                    <Icon
+                      className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110`}
+                    />
+                    {isCollapsed && link.isPro && !isPremium && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-surface flex items-center justify-center">
+                        <Lock className="w-1.5 h-1.5 text-white" />
+                      </span>
+                    )}
+                  </div>
                   {!isCollapsed && (
                     <span className="text-sm font-medium flex-1 truncate">
                       {link.label}
@@ -128,13 +136,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                   )}
                   {!isCollapsed && link.badge && (
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
                         isPremium
                           ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'bg-secondary/20 text-secondary border border-secondary/30'
+                          : 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
                       }`}
                     >
-                      {link.badge}
+                      {!isPremium && link.isPro && <Lock className="w-2.5 h-2.5 stroke-[2.5]" />}
+                      <span>{link.badge}</span>
                     </span>
                   )}
                 </NavLink>

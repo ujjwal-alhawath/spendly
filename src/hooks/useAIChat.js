@@ -19,6 +19,12 @@ export function useAIChat() {
   const user = useStore((state) => state.user);
 
   const sendMessage = async (userMessage) => {
+    const isPremium = Boolean(user?.isPremium);
+    if (!isPremium) {
+      toast.error('AI Financial Advisor is locked. Please upgrade to Spendly Pro to chat.');
+      return;
+    }
+
     // 1. Instantly add user message
     addMessage({
       id: Date.now().toString(),
