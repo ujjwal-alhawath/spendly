@@ -5,6 +5,7 @@ import { useStore } from '../../store/useStore';
 import { toast } from '../ui/Toast';
 import { Button } from '../ui/Button';
 import { NeumorphicCard } from '../ui/NeumorphicCard';
+import { API_BASE } from '../../constants';
 
 export function LockedPaywall() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,7 +16,7 @@ export function LockedPaywall() {
     setIsInstantUnlocking(true);
     try {
       if (token) {
-        const res = await fetch('http://localhost:5000/api/auth/upgrade-premium', {
+        const res = await fetch(`${API_BASE}/auth/upgrade-premium`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

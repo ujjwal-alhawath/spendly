@@ -18,6 +18,7 @@ export function MessageBubble({ message }) {
         setDisplayedContent(message.content.substring(0, i));
         i += 2;
         if (i > message.content.length) {
+          setDisplayedContent(message.content);
           clearInterval(interval);
           message.isNew = false;
         }

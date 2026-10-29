@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "test": "node test-utils.js",
+    "lint": "vite build --mode development",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -3,6 +3,7 @@ import { Crown, Sparkles, Check, X, ShieldCheck, Zap } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { toast } from '../ui/Toast';
 import { Button } from '../ui/Button';
+import { API_BASE } from '../../constants';
 
 export function UpgradeModal({ isOpen, onClose }) {
   const { user, token, setPremium } = useStore();
@@ -15,7 +16,7 @@ export function UpgradeModal({ isOpen, onClose }) {
     setIsProcessing(true);
     try {
       if (token) {
-        const response = await fetch('http://localhost:5000/api/auth/upgrade-premium', {
+        const response = await fetch(`${API_BASE}/auth/upgrade-premium`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

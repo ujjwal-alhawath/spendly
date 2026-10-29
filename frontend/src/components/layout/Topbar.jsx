@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu,
   Search,
@@ -16,6 +16,7 @@ import { NotificationDropdown } from './NotificationDropdown';
 
 export function Topbar({ onMenuClick }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const user = useStore((state) => state.user);
   const notifications = useStore((state) => state.notifications || []);
   const isPremium = Boolean(user?.isPremium);
@@ -103,6 +104,11 @@ export function Topbar({ onMenuClick }) {
               placeholder="Search expenses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  navigate(`/expenses?search=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               className="neu-inset w-48 lg:w-64 pl-9 pr-4 py-2 rounded-full text-xs text-textPrimary placeholder:text-textSecondary/60 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
             />
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Receipt, SearchX } from 'lucide-react';
+import { SearchX } from 'lucide-react';
 import { ExpenseRow } from './ExpenseRow';
 import { NeumorphicCard } from '../ui/NeumorphicCard';
 
@@ -50,8 +50,9 @@ export function ExpenseTable({ expenses = [], onEdit, onDelete }) {
           <tbody>
             {expenses.map((exp) => (
               <ExpenseRow
-                key={exp.id}
+                key={`row-${exp.id}`}
                 expense={exp}
+                mode="table"
                 onEdit={onEdit}
                 onDelete={onDelete}
               />
@@ -64,8 +65,9 @@ export function ExpenseTable({ expenses = [], onEdit, onDelete }) {
       <div className="md:hidden flex flex-col gap-3 p-4">
         {expenses.map((exp) => (
           <ExpenseRow
-            key={exp.id}
+            key={`card-${exp.id}`}
             expense={exp}
+            mode="card"
             onEdit={onEdit}
             onDelete={onDelete}
           />

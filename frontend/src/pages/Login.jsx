@@ -5,6 +5,7 @@ import { useStore } from '../store/useStore';
 import { NeumorphicCard } from '../components/ui/NeumorphicCard';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { API_BASE } from '../constants';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ export const Login = () => {
 
     if (email && password) {
       try {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const response = await fetch(`${API_BASE}/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

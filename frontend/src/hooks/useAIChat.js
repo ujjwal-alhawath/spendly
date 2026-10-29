@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { isSameMonth, parseISO } from 'date-fns';
 import { useStore } from '../store/useStore';
 import { buildContext } from '../utils/buildContext';
+import { formatCurrency } from '../utils/formatters';
 import { toast } from '../components/ui/Toast';
 
 const SYSTEM_PROMPT = `You are Spendly AI, an empathetic, highly analytical personal finance advisor. 
@@ -15,6 +17,7 @@ export function useAIChat() {
   const [isTyping, setIsTyping] = useState(false);
   const expenses = useStore((state) => state.expenses);
   const monthlyBudget = useStore((state) => state.monthlyBudget);
+  const currency = useStore((state) => state.currency);
   const addMessage = useStore((state) => state.addMessage);
   const user = useStore((state) => state.user);
 
@@ -34,7 +37,7 @@ export function useAIChat() {
     setIsTyping(true);
 
     // 2. Build contextual financial data
-    const dataContext = buildContext(expenses, monthlyBudget);
+    const dataContext = buildContext(expenses, monthlyBudget, currency);
     const fullPrompt = `${SYSTEM_PROMPT}\n\n${dataContext}\n\nUser question: ${userMessage}`;
 
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -42,8 +45,8 @@ export function useAIChat() {
     try {
       let aiText = '';
 
-      if (apiKey) {
-        // Try Gemini 2.0 Flash
+      if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+        // Try Gemini 2.0 Flash then 1.5 Flash
         const endpoints = [
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -77,7 +80,7 @@ export function useAIChat() {
           throw new Error('API response empty');
         }
       } else {
-        throw new Error('No API key provided');
+        throw new Error('No valid API key provided');
       }
 
       addMessage({
@@ -87,23 +90,40 @@ export function useAIChat() {
         isNew: true,
       });
     } catch (error) {
-      console.warn('Falling back to local contextual advisory engine:', error);
+      console.warn('Using local contextual advisory engine:', error.message);
 
-      // Intelligent local contextual response based on real data
-      const currentMonthTotal = expenses
-        .filter((e) => e.type !== 'income')
-        .reduce((s, e) => s + (Number(e.amount) || 0), 0);
-      const remaining = Math.max(0, monthlyBudget - currentMonthTotal);
+      // Intelligent local contextual response based on real filtered data
+      const now = new Date();
+      const currentMonthExpenses = (expenses || []).filter((e) => {
+        try {
+          return e.type !== 'income' && isSameMonth(parseISO(e.date), now);
+        } catch {
+          return e.type !== 'income';
+        }
+      });
+      const currentMonthTotal = currentMonthExpenses.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+      const safeBudget = monthlyBudget > 0 ? monthlyBudget : 35000;
+      const remaining = Math.max(0, safeBudget - currentMonthTotal);
+
+      // Identify actual top category
+      const catTotals = {};
+      currentMonthExpenses.forEach((e) => {
+        catTotals[e.category] = (catTotals[e.category] || 0) + (Number(e.amount) || 0);
+      });
+      const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+      const topCatName = sortedCats[0]?.[0] || 'Discretionary';
+      const topCatAmount = sortedCats[0]?.[1] || 0;
 
       let fallbackReply = '';
       const lower = userMessage.toLowerCase();
+      const budgetPct = ((currentMonthTotal / safeBudget) * 100).toFixed(0);
 
-      if (lower.includes('where') || lower.includes('most') || lower.includes('habit')) {
-        fallbackReply = `Based on your logged transactions this month, your total expenditure is ₹${currentMonthTotal.toLocaleString('en-IN')}. Your largest expense categories are Food and Shopping. Consolidating discretionary dining and setting weekly micro-limits could free up approximately ₹3,500 monthly.`;
+      if (lower.includes('where') || lower.includes('most') || lower.includes('habit') || lower.includes('top')) {
+        fallbackReply = `Based on your logged transactions this month, your total expenditure is ${formatCurrency(currentMonthTotal, currency)}. Your highest spending category is ${topCatName} at ${formatCurrency(topCatAmount, currency)}. Consolidating discretionary expenses in this area and setting weekly micro-limits could help free up around 15-20% of this allocation.`;
       } else if (lower.includes('save') || lower.includes('budget') || lower.includes('plan')) {
-        fallbackReply = `You have ₹${remaining.toLocaleString('en-IN')} remaining of your ₹${monthlyBudget.toLocaleString('en-IN')} monthly target. To boost your savings rate, consider applying the 50/30/20 rule: 50% on essentials, 30% on discretionary wants, and 20% directly into recurring deposits or mutual funds.`;
+        fallbackReply = `You have ${formatCurrency(remaining, currency)} remaining of your ${formatCurrency(safeBudget, currency)} monthly target (${budgetPct}% utilized). To boost your savings rate, consider applying the 50/30/20 guideline: 50% for core necessities, 30% for flexible lifestyle choices, and 20% routed immediately into recurring high-yield savings or mutual funds.`;
       } else {
-        fallbackReply = `Looking at your financial summary, you have ${expenses.length} active transactions logged. Your budget utilization stands at ${((currentMonthTotal / monthlyBudget) * 100).toFixed(0)}%. Focus on keeping daily discretionary expenses under ₹1,200 to safeguard your month-end cash surplus.`;
+        fallbackReply = `Looking at your financial summary, you have ${expenses.length} total transactions logged. Current month spending is ${formatCurrency(currentMonthTotal, currency)} (${budgetPct}% of your ${formatCurrency(safeBudget, currency)} budget). Maintaining daily discretionary expenses under ${formatCurrency(Math.round(remaining / 10), currency)} will ensure you finish the month with a comfortable surplus.`;
       }
 
       addMessage({

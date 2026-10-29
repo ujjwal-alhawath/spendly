@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Plus, Receipt, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { FilterBar } from '../components/expenses/FilterBar';
@@ -16,13 +17,21 @@ export function Expenses() {
   const deleteExpense = useStore((state) => state.deleteExpense);
   const currency = useStore((state) => state.currency);
   const loadDemoData = useStore((state) => state.loadDemoData);
+  const [searchParams] = useSearchParams();
 
   const [filters, setFilters] = useState({
-    search: '',
+    search: searchParams.get('search') || '',
     category: 'All',
     dateFrom: '',
     dateTo: '',
   });
+
+  useEffect(() => {
+    const q = searchParams.get('search');
+    if (q !== null) {
+      setFilters((prev) => ({ ...prev, search: q }));
+    }
+  }, [searchParams]);
   const [typeFilter, setTypeFilter] = useState('all'); // 'all' | 'expense' | 'income'
   const [sortBy, setSortBy] = useState('newest');
   const [currentPage, setCurrentPage] = useState(1);

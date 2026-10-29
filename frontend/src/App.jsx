@@ -10,10 +10,12 @@ import { Chat } from './pages/Chat';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
+import { ToastContainer } from './components/ui/Toast';
 
 function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

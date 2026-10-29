@@ -16,6 +16,7 @@ import { useStore } from '../../store/useStore';
 
 export function MonthlyBarChart({ data = [] }) {
   const currency = useStore((state) => state.currency);
+  const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₹';
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -84,7 +85,7 @@ export function MonthlyBarChart({ data = [] }) {
               fontSize={11}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
+              tickFormatter={(val) => `${currencySymbol}${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar

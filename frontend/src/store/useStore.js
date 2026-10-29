@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { generateId } from '../utils/formatters';
-
-const API_BASE = 'http://localhost:5000/api';
+import { generateId } from '../utils/formatters.js';
+import { API_BASE } from '../constants/index.js';
 
 // Generate realistic seed transactions for DEMO / SAMPLE only
 export const generateDemoTransactions = () => {
@@ -205,13 +204,13 @@ export const useStore = create(
         }
 
         // 3. Fallbacks for demo user
-        if (userExpenses.length === 0 && (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest')) {
+        if (userExpenses.length === 0 && (userData?.email === 'alex.morgan@spendly.app' || userKey === 'guest')) {
           userExpenses = generateDemoTransactions();
         }
 
         // 4. Initialize notifications if not already saved for this user
         if (userNotifications === null) {
-          if (userData.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
+          if (userData?.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
             userNotifications = generateDemoNotifications(userData);
           } else {
             userNotifications = generateInitialUserNotifications(userData);
@@ -236,6 +235,7 @@ export const useStore = create(
           categoryBudgets: userCatBudgets,
           chatHistory: userChat,
           notifications: userNotifications,
+          isPremium: Boolean(userData?.isPremium),
         });
       },
 
@@ -250,6 +250,7 @@ export const useStore = create(
           categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
           chatHistory: [],
           notifications: userNotifs,
+          isPremium: Boolean(userData?.isPremium),
         };
 
         saveScopedUserData(userKey, cleanState);
@@ -276,6 +277,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications,
+            isPremium: Boolean(user.isPremium),
           });
         }
 
@@ -307,9 +309,20 @@ export const useStore = create(
       },
 
       updateUser: (userData) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : userData,
-        })),
+        set((state) => {
+          const updated = state.user ? { ...state.user, ...userData } : userData;
+          if (updated) {
+            saveScopedUserData(getUserKey(updated), {
+              expenses: state.expenses,
+              monthlyBudget: state.monthlyBudget,
+              categoryBudgets: state.categoryBudgets,
+              chatHistory: state.chatHistory,
+              notifications: state.notifications,
+              isPremium: Boolean(updated.isPremium),
+            });
+          }
+          return { user: updated };
+        }),
 
       // ==========================================
       // TRANSACTIONS CRUD (USER-SCOPED & MONGO SYNC)
@@ -324,6 +337,7 @@ export const useStore = create(
           ...expenseData,
           type: expenseData.type || 'expense',
           id: newId,
+          _id: newId,
           createdAt: Date.now(),
         };
 
@@ -336,6 +350,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
 
         // Sync with MongoDB backend if authenticated
@@ -351,12 +366,21 @@ export const useStore = create(
             });
             if (res.ok) {
               const saved = await res.json();
-              // Update id with MongoDB _id
-              set((state) => ({
-                expenses: state.expenses.map((e) =>
+              // Update id with MongoDB _id in BOTH Zustand store and localStorage!
+              set((state) => {
+                const synchronized = state.expenses.map((e) =>
                   e.id === newId ? { ...e, id: saved.id, _id: saved.id } : e
-                ),
-              }));
+                );
+                saveScopedUserData(userKey, {
+                  expenses: synchronized,
+                  monthlyBudget,
+                  categoryBudgets,
+                  chatHistory,
+                  notifications,
+                  isPremium: Boolean(user?.isPremium),
+                });
+                return { expenses: synchronized };
+              });
             }
           } catch (e) {
             console.warn('Backend sync failed, saved locally:', e);
@@ -379,6 +403,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -412,6 +437,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -437,6 +463,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
 
         if (token && token !== 'demo-token-12345') {
@@ -461,9 +488,10 @@ export const useStore = create(
         saveScopedUserData(userKey, {
           expenses: demoData,
           monthlyBudget: 35000,
-          categoryBudgets,
-          chatHistory,
+          categoryBudgets: categoryBudgets || DEFAULT_CATEGORY_BUDGETS,
+          chatHistory: chatHistory || [],
           notifications: demoNotifs,
+          isPremium: Boolean(user?.isPremium),
         });
       },
 
@@ -478,16 +506,17 @@ export const useStore = create(
         saveScopedUserData(getUserKey(user), {
           expenses,
           monthlyBudget: newBudget,
-          categoryBudgets,
+          categoryBudgets: categoryBudgets || DEFAULT_CATEGORY_BUDGETS,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
       },
 
       setCategoryBudget: (category, amount) => {
         const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const newCatBudgets = {
-          ...categoryBudgets,
+          ...(categoryBudgets || DEFAULT_CATEGORY_BUDGETS),
           [category]: Number(amount) || 0,
         };
         set({ categoryBudgets: newCatBudgets });
@@ -497,6 +526,7 @@ export const useStore = create(
           categoryBudgets: newCatBudgets,
           chatHistory,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
       },
 
@@ -516,6 +546,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory: newChat,
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
       },
 
@@ -528,6 +559,7 @@ export const useStore = create(
           categoryBudgets,
           chatHistory: [],
           notifications,
+          isPremium: Boolean(user?.isPremium),
         });
       },
 
@@ -548,6 +580,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications: updated,
+            isPremium: Boolean(user.isPremium),
           });
         }
       },
@@ -563,6 +596,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications: updated,
+            isPremium: Boolean(user.isPremium),
           });
         }
       },
@@ -577,6 +611,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications: [],
+            isPremium: Boolean(user.isPremium),
           });
         }
       },
@@ -592,6 +627,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications: updated,
+            isPremium: Boolean(user.isPremium),
           });
         }
       },
@@ -613,6 +649,7 @@ export const useStore = create(
             categoryBudgets,
             chatHistory,
             notifications: updated,
+            isPremium: Boolean(user.isPremium),
           });
         }
       },

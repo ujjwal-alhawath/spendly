@@ -2,16 +2,12 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { ToastContainer } from '../ui/Toast';
-
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-row overflow-x-hidden text-textPrimary">
-      {/* Toast Notifications */}
-      <ToastContainer />
 
       {/* Sidebar Navigation */}
       <Sidebar

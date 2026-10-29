@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const authMiddleware = require('../middleware/authMiddleware');
 const Expense = require('../models/Expense');
 
@@ -37,18 +38,27 @@ router.post('/', async (req, res) => {
   try {
     const { title, amount, category, type = 'expense', date, note = '' } = req.body;
 
-    if (!title || !amount || !category) {
-      return res.status(400).json({ message: 'Please provide title, amount, and category' });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ message: 'Title is required' });
+    }
+
+    const numAmount = Number(amount);
+    if (amount === undefined || amount === null || isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ message: 'Please provide a valid positive amount' });
+    }
+
+    if (!category || !category.trim()) {
+      return res.status(400).json({ message: 'Category is required' });
     }
 
     const newExpense = new Expense({
       user: req.user.id,
-      title,
-      amount: Number(amount),
-      category,
+      title: title.trim(),
+      amount: numAmount,
+      category: category.trim(),
       type: type === 'income' ? 'income' : 'expense',
       date: date || new Date().toISOString().split('T')[0],
-      note,
+      note: typeof note === 'string' ? note.trim() : '',
     });
 
     const saved = await newExpense.save();
@@ -73,7 +83,13 @@ router.post('/', async (req, res) => {
 // @desc    Update a transaction
 router.put('/:id', async (req, res) => {
   try {
-    const expense = await Expense.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    const expense = await Expense.findById(id);
 
     if (!expense) {
       return res.status(404).json({ message: 'Transaction not found' });
@@ -85,12 +101,26 @@ router.put('/:id', async (req, res) => {
     }
 
     const { title, amount, category, type, date, note } = req.body;
-    if (title) expense.title = title;
-    if (amount !== undefined) expense.amount = Number(amount);
-    if (category) expense.category = category;
-    if (type) expense.type = type;
-    if (date) expense.date = date;
-    if (note !== undefined) expense.note = note;
+    if (title !== undefined) {
+      if (!title.trim()) return res.status(400).json({ message: 'Title cannot be empty' });
+      expense.title = title.trim();
+    }
+    if (amount !== undefined) {
+      const numAmount = Number(amount);
+      if (isNaN(numAmount) || numAmount <= 0) {
+        return res.status(400).json({ message: 'Amount must be a positive number' });
+      }
+      expense.amount = numAmount;
+    }
+    if (category !== undefined) {
+      if (!category.trim()) return res.status(400).json({ message: 'Category cannot be empty' });
+      expense.category = category.trim();
+    }
+    if (type !== undefined) {
+      expense.type = type === 'income' ? 'income' : 'expense';
+    }
+    if (date !== undefined) expense.date = date;
+    if (note !== undefined) expense.note = typeof note === 'string' ? note.trim() : '';
 
     const updated = await expense.save();
     res.json({
@@ -114,7 +144,13 @@ router.put('/:id', async (req, res) => {
 // @desc    Delete a transaction
 router.delete('/:id', async (req, res) => {
   try {
-    const expense = await Expense.findById(req.params.id);
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ message: 'Transaction not found' });
+    }
+
+    const expense = await Expense.findById(id);
 
     if (!expense) {
       return res.status(404).json({ message: 'Transaction not found' });
@@ -125,7 +161,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     await expense.deleteOne();
-    res.json({ message: 'Transaction deleted', id: req.params.id });
+    res.json({ message: 'Transaction deleted', id });
   } catch (err) {
     console.error('Error deleting expense:', err);
     res.status(500).json({ message: 'Server error deleting expense' });

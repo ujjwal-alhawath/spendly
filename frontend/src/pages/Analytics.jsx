@@ -32,6 +32,7 @@ export function Analytics() {
   const expenses = useStore((state) => state.expenses);
   const monthlyBudget = useStore((state) => state.monthlyBudget);
   const currency = useStore((state) => state.currency);
+  const currencySymbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '₹';
 
   const stats = useExpenseStats(expenses, monthlyBudget);
   const [timeRange, setTimeRange] = useState('month'); // 'month' | 'quarter' | 'half' | 'year'
@@ -221,7 +222,7 @@ export function Analytics() {
                 fontSize={11}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
+                tickFormatter={(val) => `${currencySymbol}${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
