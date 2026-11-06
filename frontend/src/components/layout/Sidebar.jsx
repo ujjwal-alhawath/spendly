@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -10,17 +10,12 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Crown,
   Wallet,
-  Lock,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { UpgradeModal } from '../premium/UpgradeModal';
 
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
   const { user, logout } = useStore();
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const isPremium = Boolean(user?.isPremium);
 
   const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -31,8 +26,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
       to: '/chat',
       label: 'AI Advisor',
       icon: Sparkles,
-      badge: isPremium ? 'PRO' : 'LOCKED',
-      isPro: true,
+      badge: 'SOON',
     },
     { to: '/settings', label: 'Settings', icon: Settings },
   ];
@@ -123,11 +117,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                     <Icon
                       className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110`}
                     />
-                    {isCollapsed && link.isPro && !isPremium && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-surface flex items-center justify-center">
-                        <Lock className="w-1.5 h-1.5 text-white" />
-                      </span>
-                    )}
                   </div>
                   {!isCollapsed && (
                     <span className="text-sm font-medium flex-1 truncate">
@@ -135,42 +124,13 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                     </span>
                   )}
                   {!isCollapsed && link.badge && (
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
-                        isPremium
-                          ? 'bg-primary/20 text-primary border border-primary/30'
-                          : 'bg-amber-500/15 text-amber-600 border border-amber-500/30'
-                      }`}
-                    >
-                      {!isPremium && link.isPro && <Lock className="w-2.5 h-2.5 stroke-[2.5]" />}
-                      <span>{link.badge}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+                      {link.badge}
                     </span>
                   )}
                 </NavLink>
               );
             })}
-
-            {/* Pro Upgrade Card (if free user & not collapsed) */}
-            {!isPremium && !isCollapsed && (
-              <div className="mt-4 p-4 rounded-2xl neu-inset border border-secondary/30 bg-gradient-to-br from-surface via-secondary/5 to-primary/5 flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-secondary">
-                  <Crown className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-textPrimary">
-                    Spendly Pro
-                  </span>
-                </div>
-                <p className="text-[11px] text-textSecondary leading-relaxed">
-                  Unlock unlimited Gemini AI chat advisor & smart spending forecasts.
-                </p>
-                <button
-                  onClick={() => setIsUpgradeModalOpen(true)}
-                  className="mt-1 w-full py-2 px-3 rounded-xl neu-btn-primary text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Upgrade to Pro</span>
-                </button>
-              </div>
-            )}
           </nav>
 
           {/* Profile Section at Bottom */}
@@ -186,16 +146,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
                 </div>
                 {!isCollapsed && (
                   <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-bold text-textPrimary truncate">
-                        {user?.name || 'Guest User'}
-                      </span>
-                      {isPremium && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-primary/20 text-primary border border-primary/30">
-                          PRO
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-xs font-bold text-textPrimary truncate">
+                      {user?.name || 'Guest User'}
+                    </span>
                     <span className="text-[11px] text-textSecondary truncate">
                       {user?.email || 'guest@spendly.app'}
                     </span>
@@ -214,11 +167,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
           </div>
         </div>
       </aside>
-
-      <UpgradeModal
-        isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
-      />
     </>
   );
 }

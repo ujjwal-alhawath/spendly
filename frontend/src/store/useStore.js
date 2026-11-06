@@ -70,8 +70,8 @@ export const generateDemoNotifications = (user) => [
   },
   {
     id: 'demo-notif-ai',
-    title: 'Gemini AI Advisory Ready',
-    message: 'Ask Gemini AI how to optimize recurring subscriptions and maximize monthly savings.',
+    title: 'AI Financial Advisor (Coming Soon)',
+    message: 'Intelligent AI financial forecasting and expense advisory are currently under development.',
     type: 'ai',
     time: '5 hours ago',
     read: false,
@@ -101,8 +101,8 @@ export const generateInitialUserNotifications = (user) => [
   },
   {
     id: 'ai-ready-' + Date.now(),
-    title: 'Gemini AI Advisor Ready',
-    message: 'Connect your financial questions with Gemini AI to get automated budgeting insights.',
+    title: 'AI Financial Advisor (Coming Soon)',
+    message: 'Intelligent AI financial forecasting and expense advisory are currently under development.',
     type: 'ai',
     time: 'Just now',
     read: false,

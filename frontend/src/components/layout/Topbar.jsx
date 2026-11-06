@@ -5,12 +5,9 @@ import {
   Search,
   Bell,
   Plus,
-  Crown,
   Calendar,
-  Sparkles,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { UpgradeModal } from '../premium/UpgradeModal';
 import { AddModal } from '../expenses/AddModal';
 import { NotificationDropdown } from './NotificationDropdown';
 
@@ -19,9 +16,7 @@ export function Topbar({ onMenuClick }) {
   const navigate = useNavigate();
   const user = useStore((state) => state.user);
   const notifications = useStore((state) => state.notifications || []);
-  const isPremium = Boolean(user?.isPremium);
 
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,8 +48,8 @@ export function Topbar({ onMenuClick }) {
         };
       case '/chat':
         return {
-          title: 'Gemini AI Financial Advisor',
-          subtitle: 'Ask questions and get intelligent advice based on your data',
+          title: 'AI Financial Advisor',
+          subtitle: 'Feature under development • Coming soon',
         };
       case '/settings':
         return {
@@ -94,7 +89,7 @@ export function Topbar({ onMenuClick }) {
           </div>
         </div>
 
-        {/* Right Side: Search, Date Selector, Notifications, Add Transaction & Pro */}
+        {/* Right Side: Search, Date Selector, Notifications, Add Transaction */}
         <div className="flex items-center gap-3 shrink-0 relative">
           {/* Quick Search Input */}
           <div className="relative hidden md:flex items-center">
@@ -146,26 +141,6 @@ export function Topbar({ onMenuClick }) {
             />
           </div>
 
-          {/* Pro Badge / Upgrade Button */}
-          {isPremium ? (
-            <button
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="neu-pill px-3 py-1.5 hidden sm:flex items-center gap-1.5 text-xs font-bold text-primary border border-primary/30 bg-primary/10 hover:bg-primary/20 transition-all cursor-pointer"
-              title="Spendly Pro Plan Active"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>PRO</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="neu-btn px-3.5 py-1.5 hidden sm:flex items-center gap-1.5 text-xs font-bold text-secondary border border-secondary/30 hover:border-secondary cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-secondary" />
-              <span>Upgrade</span>
-            </button>
-          )}
-
           {/* Add Transaction Button */}
           <button
             onClick={() => setIsAddModalOpen(true)}
@@ -181,12 +156,6 @@ export function Topbar({ onMenuClick }) {
       <AddModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-      />
-
-      {/* Upgrade Pro Modal */}
-      <UpgradeModal
-        isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
       />
     </>
   );

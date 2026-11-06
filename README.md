@@ -30,14 +30,13 @@ spendly/
 - **Dashboard:** Visualize your spending with Donut, Area, and Bar charts.
 - **Expense Tracking:** Add, edit, and categorize your transactions.
 - **Advanced Filtering:** Sort by category, date range, and amount.
-- **AI Advisor:** Integrated with Google Gemini Flash to give specific, actionable financial advice based on your exact spending history.
+- **AI Advisor:** Personalized AI Financial Advisor to give specific, actionable advice based on your exact spending history (Coming Soon).
 - **Authentication & Backend Sync:** Full user authentication (JWT) with MongoDB storage and local fallback.
 - **Local Persistence:** Data cached locally with `Zustand` and `localStorage`.
 
 ## Tech Stack
 - **Frontend:** React 18, Vite, Tailwind CSS v3, Zustand, React Router v6, Recharts, Lucide Icons
 - **Backend:** Node.js, Express, MongoDB (Mongoose), JWT, BcryptJS
-- **AI Integration:** Google Gemini API
 
 ---
 

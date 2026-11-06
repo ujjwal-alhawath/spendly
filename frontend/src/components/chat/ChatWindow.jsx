@@ -42,7 +42,7 @@ export function ChatWindow() {
               <Sparkles className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-extrabold text-textPrimary tracking-tight mb-2">
-              Gemini AI Financial Advisor
+              AI Financial Advisor
             </h3>
             <p className="text-xs sm:text-sm text-textSecondary mb-8 leading-relaxed max-w-md">
               Ask questions about your transactions, spending habits, category breakdowns, or request personalized budgeting recommendations.
@@ -72,12 +72,8 @@ export function ChatWindow() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              disabled={!isPremium || isTyping}
-              placeholder={
-                !isPremium
-                  ? 'AI Financial Advisor is locked. Upgrade to Pro to chat...'
-                  : 'Ask anything about your spending or budget...'
-              }
+              disabled={true}
+              placeholder="AI Financial Advisor is under development • Coming soon..."
               className="w-full bg-surface neu-inset text-textPrimary placeholder:text-textSecondary/60 rounded-full pl-6 pr-14 py-3.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all disabled:opacity-50"
             />
             <button

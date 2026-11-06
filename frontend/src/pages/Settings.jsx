@@ -3,7 +3,6 @@ import {
   User,
   Globe,
   Database,
-  Crown,
   Download,
   Upload,
   RefreshCw,
@@ -21,7 +20,6 @@ export function Settings() {
   const {
     user,
     updateUser,
-    setPremium,
     currency,
     setCurrency,
     monthlyBudget,
@@ -34,8 +32,6 @@ export function Settings() {
   const [name, setName] = useState(user?.name || 'Alex Morgan');
   const [email, setEmail] = useState(user?.email || 'alex.morgan@spendly.app');
   const [budgetVal, setBudgetVal] = useState(monthlyBudget.toString());
-
-  const isPremium = Boolean(user?.isPremium);
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
@@ -141,20 +137,7 @@ export function Settings() {
             />
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-textSecondary">Pro Status:</span>
-              <span
-                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${
-                  isPremium
-                    ? 'bg-primary/20 text-primary border border-primary/30'
-                    : 'bg-black/10 text-textSecondary'
-                }`}
-              >
-                {isPremium ? '💎 Spendly Pro Active' : 'Free Tier'}
-              </span>
-            </div>
-
+          <div className="flex items-center justify-end pt-2">
             <Button type="submit" variant="primary">
               Save Profile
             </Button>
