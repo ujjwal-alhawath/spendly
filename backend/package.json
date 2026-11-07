@@ -5,7 +5,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "node test-api.js"
+    "test": "node test-api.js",
+    "migrate:atlas": "node migrate-to-atlas.js",
+    "db:optimize": "node scripts/optimize-db.js"
   },
   "keywords": [],
   "author": "",

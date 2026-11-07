@@ -12,6 +12,7 @@
     "install:all": "npm install --prefix frontend && npm install --prefix backend",
     "test:backend": "npm test --prefix backend",
     "test:frontend": "npm test --prefix frontend",
-    "test:all": "npm test --prefix backend && npm test --prefix frontend"
+    "test:all": "npm test --prefix backend && npm test --prefix frontend",
+    "db:optimize": "npm run db:optimize --prefix backend"
   }
 }

@@ -12,7 +12,9 @@ router.use(authMiddleware);
 // @desc    Get all transactions for the authenticated user
 router.get('/', async (req, res) => {
   try {
-    const expenses = await Expense.find({ user: req.user.id }).sort({ date: -1, createdAt: -1 });
+    const expenses = await Expense.find({ user: req.user.id })
+      .sort({ date: -1, createdAt: -1 })
+      .lean();
     // Normalize id to match frontend expectations
     const formatted = expenses.map((exp) => ({
       id: exp._id.toString(),

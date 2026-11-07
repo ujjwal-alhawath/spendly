@@ -259,6 +259,12 @@ async function runTests() {
     console.error('Test execution error:', err);
     failed++;
   } finally {
+    try {
+      const User = require('./models/User');
+      await User.deleteMany({ email: { $regex: /^(test_|user2_|empty_)/i } });
+    } catch (cleanupErr) {
+      // Ignore cleanup error
+    }
     server.close();
     await mongoose.disconnect();
     console.log(`\nTests finished: ${passed} passed, ${failed} failed.`);
