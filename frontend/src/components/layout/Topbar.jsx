@@ -6,6 +6,8 @@ import {
   Bell,
   Plus,
   Calendar,
+  LogIn,
+  Eye,
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { AddModal } from '../expenses/AddModal';
@@ -15,6 +17,8 @@ export function Topbar({ onMenuClick }) {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useStore((state) => state.user);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const openAuthModal = useStore((state) => state.openAuthModal);
   const notifications = useStore((state) => state.notifications || []);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -24,12 +28,22 @@ export function Topbar({ onMenuClick }) {
 
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
+  const handleAddClick = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to add new transactions and record your cash flow.');
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
+
   const getPageInfo = () => {
     switch (location.pathname) {
       case '/':
         return {
           title: 'Financial Dashboard',
-          subtitle: `Welcome back, ${user?.name ? user.name.split(' ')[0] : 'friend'} • Overview of your assets & cash flow`,
+          subtitle: isAuthenticated
+            ? `Welcome back, ${user?.name ? user.name.split(' ')[0] : 'friend'} • Overview of your assets & cash flow`
+            : 'Explore Mode • Viewing sample financial dashboard and cash flow analytics',
         };
       case '/expenses':
         return {
@@ -141,9 +155,26 @@ export function Topbar({ onMenuClick }) {
             />
           </div>
 
+          {/* Guest Explore Mode Badges / Login Button */}
+          {!isAuthenticated && (
+            <div className="flex items-center gap-2">
+              <span className="hidden sm:inline-flex items-center gap-1.5 neu-pill px-3 py-1.5 text-xs font-bold text-primary">
+                <Eye className="w-3.5 h-3.5" />
+                <span>Explore Mode</span>
+              </span>
+              <button
+                onClick={() => navigate('/login')}
+                className="neu-btn px-3.5 py-1.5 rounded-2xl text-xs font-bold text-textPrimary hover:text-primary flex items-center gap-1.5 cursor-pointer transition-all"
+              >
+                <LogIn className="w-3.5 h-3.5 text-primary" />
+                <span>Log In</span>
+              </button>
+            </div>
+          )}
+
           {/* Add Transaction Button */}
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={handleAddClick}
             className="neu-btn-primary px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2 cursor-pointer shadow-neu-accent"
           >
             <Plus className="w-4 h-4 stroke-[3]" />

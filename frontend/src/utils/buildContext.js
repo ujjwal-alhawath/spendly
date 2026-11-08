@@ -2,9 +2,9 @@ import { isSameMonth, parseISO } from 'date-fns';
 import { CATEGORIES } from './categories.js';
 import { formatCurrency, formatDate } from './formatters.js';
 
-export function buildContext(expenses = [], monthlyBudget = 35000, currency = 'INR') {
+export function buildContext(expenses = [], monthlyBudget = 0, currency = 'INR') {
   const safeExpenses = Array.isArray(expenses) ? expenses : [];
-  const safeBudget = Number(monthlyBudget) > 0 ? Number(monthlyBudget) : 35000;
+  const safeBudget = Math.max(0, Number(monthlyBudget) || 0);
   const now = new Date();
   
   // Last month date comparison helper

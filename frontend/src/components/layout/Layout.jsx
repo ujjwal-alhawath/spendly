@@ -2,12 +2,16 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { LoginPromptModal } from '../auth/LoginPromptModal';
+
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-row overflow-x-hidden text-textPrimary">
+      {/* Global Auth Modal for Explore/Guest Mode */}
+      <LoginPromptModal />
 
       {/* Sidebar Navigation */}
       <Sidebar

@@ -7,7 +7,8 @@
     "dev": "node server.js",
     "test": "node test-api.js",
     "migrate:atlas": "node migrate-to-atlas.js",
-    "db:optimize": "node scripts/optimize-db.js"
+    "db:optimize": "node scripts/optimize-db.js",
+    "db:reset": "node scripts/reset-db.js"
   },
   "keywords": [],
   "author": "",

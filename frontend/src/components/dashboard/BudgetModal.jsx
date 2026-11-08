@@ -16,7 +16,7 @@ export function BudgetModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (isOpen) {
-      setAmount(monthlyBudget.toString());
+      setAmount(monthlyBudget > 0 ? monthlyBudget.toString() : '');
     }
   }, [isOpen, monthlyBudget]);
 
@@ -32,7 +32,7 @@ export function BudgetModal({ isOpen, onClose }) {
     onClose();
   };
 
-  const presets = [25000, 35000, 50000, 75000, 100000];
+  const presets = [10000, 25000, 50000, 75000, 100000];
 
   return (
     <Modal
@@ -51,7 +51,7 @@ export function BudgetModal({ isOpen, onClose }) {
               Current Target
             </p>
             <p className="text-base font-extrabold text-textPrimary">
-              {formatCurrency(monthlyBudget, currency)} / month
+              {monthlyBudget > 0 ? `${formatCurrency(monthlyBudget, currency)} / month` : 'Not set yet (₹0)'}
             </p>
           </div>
         </div>
@@ -60,7 +60,7 @@ export function BudgetModal({ isOpen, onClose }) {
           label={`Target Amount (${currency}) *`}
           type="number"
           step="100"
-          placeholder="35000"
+          placeholder="e.g. 25000"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           autoFocus

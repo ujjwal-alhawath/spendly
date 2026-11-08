@@ -10,7 +10,7 @@ import {
 } from 'date-fns';
 import { CATEGORIES } from '../utils/categories';
 
-export function useExpenseStats(expenses = [], monthlyBudget = 35000) {
+export function useExpenseStats(expenses = [], monthlyBudget = 0) {
   return useMemo(() => {
     const now = new Date();
     const prevMonthDate = subMonths(now, 1);
@@ -78,7 +78,9 @@ export function useExpenseStats(expenses = [], monthlyBudget = 35000) {
     const totalBalance =
       totalAllTimeIncome > 0
         ? totalAllTimeIncome - totalAllTimeExpense
-        : Math.max(0, monthlyBudget - totalSpentThisMonth);
+        : monthlyBudget > 0
+        ? Math.max(0, monthlyBudget - totalSpentThisMonth)
+        : -totalSpentThisMonth;
 
     // Savings Rate
     const effectiveIncome =
@@ -88,7 +90,7 @@ export function useExpenseStats(expenses = [], monthlyBudget = 35000) {
       effectiveIncome > 0 ? Math.round((savingsAmount / effectiveIncome) * 100) : 0;
 
     // Budget Calculations
-    const budgetRemaining = Math.max(0, monthlyBudget - totalSpentThisMonth);
+    const budgetRemaining = monthlyBudget > 0 ? Math.max(0, monthlyBudget - totalSpentThisMonth) : 0;
     const budgetUsedPercent =
       monthlyBudget > 0
         ? Math.min(100, (totalSpentThisMonth / monthlyBudget) * 100)

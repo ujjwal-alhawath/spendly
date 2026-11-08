@@ -16,6 +16,8 @@ export function Expenses() {
   const expenses = useStore((state) => state.expenses);
   const deleteExpense = useStore((state) => state.deleteExpense);
   const currency = useStore((state) => state.currency);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const openAuthModal = useStore((state) => state.openAuthModal);
   const loadDemoData = useStore((state) => state.loadDemoData);
   const [searchParams] = useSearchParams();
 
@@ -106,11 +108,19 @@ export function Expenses() {
   );
 
   const handleEdit = (exp) => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to edit transactions.');
+      return;
+    }
     setExpenseToEdit(exp);
     setIsAddModalOpen(true);
   };
 
   const handleDelete = (exp) => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to delete transactions.');
+      return;
+    }
     if (window.confirm(`Are you sure you want to delete "${exp.title}"?`)) {
       deleteExpense(exp.id);
       toast.success('Transaction deleted');
@@ -121,6 +131,10 @@ export function Expenses() {
   };
 
   const handleOpenAdd = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to add new transactions and track your expenses.');
+      return;
+    }
     setExpenseToEdit(null);
     setIsAddModalOpen(true);
   };

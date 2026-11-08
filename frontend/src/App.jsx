@@ -20,15 +20,14 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="expenses" element={<Expenses />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="budgets" element={<Budgets />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
+        {/* Explore Mode: All routes can be viewed freely; actions prompt login */}
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="expenses" element={<Expenses />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="budgets" element={<Budgets />} />
+          <Route path="chat" element={<Chat />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Fallback route */}

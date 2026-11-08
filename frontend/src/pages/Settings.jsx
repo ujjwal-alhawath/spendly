@@ -19,6 +19,8 @@ import { toast } from '../components/ui/Toast';
 export function Settings() {
   const {
     user,
+    isAuthenticated,
+    openAuthModal,
     updateUser,
     currency,
     setCurrency,
@@ -31,16 +33,24 @@ export function Settings() {
 
   const [name, setName] = useState(user?.name || 'Alex Morgan');
   const [email, setEmail] = useState(user?.email || 'alex.morgan@spendly.app');
-  const [budgetVal, setBudgetVal] = useState(monthlyBudget.toString());
+  const [budgetVal, setBudgetVal] = useState(monthlyBudget > 0 ? monthlyBudget.toString() : '');
 
   const handleSaveProfile = (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to update profile preferences.');
+      return;
+    }
     updateUser({ name, email });
     toast.success('Profile preferences updated');
   };
 
   const handleSaveBudget = (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to customize your monthly budget.');
+      return;
+    }
     const num = Number(budgetVal);
     if (!num || num <= 0) {
       toast.error('Enter a valid monthly target');
@@ -72,6 +82,10 @@ export function Settings() {
 
   // Import JSON backup
   const handleImportData = (e) => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to import data to your account.');
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -97,6 +111,17 @@ export function Settings() {
     reader.readAsText(file);
   };
 
+  const handleClearData = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to manage transactions.');
+      return;
+    }
+    if (window.confirm('Are you sure you want to delete all transactions? This cannot be undone.')) {
+      clearAllExpenses();
+      toast.success('All transactions cleared');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 max-w-4xl mx-auto w-full pb-16">
       <div>
@@ -107,6 +132,23 @@ export function Settings() {
           Manage your account profile, currency formatting, and local data persistence
         </p>
       </div>
+
+      {!isAuthenticated && (
+        <div className="p-4 rounded-2xl bg-primary/10 border border-primary/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="w-5 h-5 text-primary shrink-0" />
+            <p className="text-xs text-textSecondary">
+              <strong className="text-textPrimary font-bold">You are in Explore Mode.</strong> Sign in to create a customized profile, configure personal budgets, and sync your financial records.
+            </p>
+          </div>
+          <button
+            onClick={() => openAuthModal('Please log in to personalize your profile and settings.')}
+            className="neu-btn px-3.5 py-1.5 rounded-xl text-xs font-bold text-primary shrink-0 cursor-pointer self-end sm:self-auto"
+          >
+            Sign In
+          </button>
+        </div>
+      )}
 
       {/* User Profile Card */}
       <NeumorphicCard className="p-6">
@@ -278,6 +320,10 @@ export function Settings() {
               variant="surface"
               size="sm"
               onClick={() => {
+                if (!isAuthenticated) {
+                  openAuthModal('Please log in to reload sample data to your account.');
+                  return;
+                }
                 loadDemoData();
                 toast.success('Sample transactions reloaded');
               }}
@@ -300,12 +346,7 @@ export function Settings() {
             <Button
               variant="danger"
               size="sm"
-              onClick={() => {
-                if (window.confirm('Are you sure you want to delete all transactions?')) {
-                  clearAllExpenses();
-                  toast.success('All transactions cleared');
-                }
-              }}
+              onClick={handleClearData}
             >
               Clear Transactions
             </Button>

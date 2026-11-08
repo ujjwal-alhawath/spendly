@@ -152,12 +152,17 @@ export const useStore = create(
       user: null,
       token: null,
       isAuthenticated: false,
+      isAuthModalOpen: false,
+      authModalMessage: '',
       currency: 'INR',
-      expenses: [],
-      monthlyBudget: 35000,
+      expenses: generateDemoTransactions(),
+      monthlyBudget: 0,
       categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
       chatHistory: [],
-      notifications: [],
+      notifications: generateDemoNotifications(null),
+
+      openAuthModal: (message = '') => set({ isAuthModalOpen: true, authModalMessage: message }),
+      closeAuthModal: () => set({ isAuthModalOpen: false, authModalMessage: '' }),
 
       // ==========================================
       // AUTHENTICATION & MULTI-USER ISOLATION
@@ -166,7 +171,7 @@ export const useStore = create(
       login: async (userData, token) => {
         const userKey = getUserKey(userData);
         let userExpenses = [];
-        let userBudget = 35000;
+        let userBudget = 0;
         let userCatBudgets = DEFAULT_CATEGORY_BUDGETS;
         let userChat = [];
         let userNotifications = null;
@@ -175,7 +180,7 @@ export const useStore = create(
         const cached = loadScopedUserData(userKey);
         if (cached) {
           userExpenses = cached.expenses || [];
-          userBudget = cached.monthlyBudget || 35000;
+          userBudget = cached.monthlyBudget !== undefined ? cached.monthlyBudget : 0;
           userCatBudgets = cached.categoryBudgets || DEFAULT_CATEGORY_BUDGETS;
           userChat = cached.chatHistory || [];
           if (Array.isArray(cached.notifications)) {
@@ -243,10 +248,10 @@ export const useStore = create(
         const userKey = getUserKey(userData);
         const userNotifs = generateInitialUserNotifications(userData);
 
-        // A brand new user account starts with clean 0 transactions!
+        // A brand new user account starts with clean 0 transactions and 0 budget!
         const cleanState = {
           expenses: [],
-          monthlyBudget: 35000,
+          monthlyBudget: 0,
           categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
           chatHistory: [],
           notifications: userNotifs,
@@ -260,7 +265,7 @@ export const useStore = create(
           token,
           isAuthenticated: true,
           expenses: [],
-          monthlyBudget: 35000,
+          monthlyBudget: 0,
           categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
           chatHistory: [],
           notifications: userNotifs,
@@ -281,14 +286,15 @@ export const useStore = create(
           });
         }
 
-        // Clear active session completely so next user doesn't see old data
+        // Switch to clean guest explore state with sample data
         set({
           user: null,
           token: null,
           isAuthenticated: false,
-          expenses: [],
+          expenses: generateDemoTransactions(),
+          monthlyBudget: 0,
           chatHistory: [],
-          notifications: [],
+          notifications: generateDemoNotifications(null),
         });
       },
 
@@ -329,6 +335,11 @@ export const useStore = create(
       // ==========================================
 
       addExpense: async (expenseData) => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to add transactions and track your expenses.');
+          return;
+        }
+
         const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
@@ -389,6 +400,11 @@ export const useStore = create(
       },
 
       editExpense: async (id, updatedData) => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to edit transactions.');
+          return;
+        }
+
         const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
@@ -423,6 +439,11 @@ export const useStore = create(
       },
 
       deleteExpense: async (id) => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to delete transactions.');
+          return;
+        }
+
         const { user, token, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
@@ -453,6 +474,11 @@ export const useStore = create(
       },
 
       clearAllExpenses: async () => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to clear transactions.');
+          return;
+        }
+
         const { user, token, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const userKey = getUserKey(user);
 
@@ -484,10 +510,10 @@ export const useStore = create(
         const demoData = generateDemoTransactions();
         const demoNotifs = generateDemoNotifications(user);
 
-        set({ expenses: demoData, monthlyBudget: 35000, notifications: demoNotifs });
+        set({ expenses: demoData, monthlyBudget: 0, notifications: demoNotifs });
         saveScopedUserData(userKey, {
           expenses: demoData,
-          monthlyBudget: 35000,
+          monthlyBudget: 0,
           categoryBudgets: categoryBudgets || DEFAULT_CATEGORY_BUDGETS,
           chatHistory: chatHistory || [],
           notifications: demoNotifs,
@@ -500,8 +526,13 @@ export const useStore = create(
       // ==========================================
 
       setBudget: (amount) => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to set or modify your monthly budget.');
+          return;
+        }
+
         const { user, expenses, categoryBudgets, chatHistory, notifications } = get();
-        const newBudget = amount > 0 ? Number(amount) : 35000;
+        const newBudget = Math.max(0, Number(amount) || 0);
         set({ monthlyBudget: newBudget });
         saveScopedUserData(getUserKey(user), {
           expenses,
@@ -514,6 +545,11 @@ export const useStore = create(
       },
 
       setCategoryBudget: (category, amount) => {
+        if (!get().isAuthenticated) {
+          get().openAuthModal('Please log in to set category budgets.');
+          return;
+        }
+
         const { user, expenses, monthlyBudget, categoryBudgets, chatHistory, notifications } = get();
         const newCatBudgets = {
           ...(categoryBudgets || DEFAULT_CATEGORY_BUDGETS),

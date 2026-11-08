@@ -18,6 +18,8 @@ import { AddModal } from '../expenses/AddModal';
 export function RecentTransactions({ expenses = [] }) {
   const currency = useStore((state) => state.currency);
   const deleteExpense = useStore((state) => state.deleteExpense);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const openAuthModal = useStore((state) => state.openAuthModal);
 
   const [expenseToEdit, setExpenseToEdit] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -29,12 +31,20 @@ export function RecentTransactions({ expenses = [] }) {
 
   const handleEdit = (exp, e) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to edit transactions.');
+      return;
+    }
     setExpenseToEdit(exp);
     setIsEditModalOpen(true);
   };
 
   const handleDelete = (exp, e) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to delete transactions.');
+      return;
+    }
     if (window.confirm(`Delete transaction "${exp.title}"?`)) {
       deleteExpense(exp.id);
       toast.success('Transaction removed');

@@ -22,11 +22,29 @@ export function Dashboard() {
   const expenses = useStore((state) => state.expenses);
   const monthlyBudget = useStore((state) => state.monthlyBudget);
   const currency = useStore((state) => state.currency);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const openAuthModal = useStore((state) => state.openAuthModal);
 
   const stats = useExpenseStats(expenses, monthlyBudget);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
+
+  const handleOpenBudget = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to configure and track your monthly budget.');
+      return;
+    }
+    setIsBudgetModalOpen(true);
+  };
+
+  const handleOpenAdd = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to add transactions and track your expenses.');
+      return;
+    }
+    setIsAddModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full relative pb-20 md:pb-6">
@@ -66,15 +84,15 @@ export function Dashboard() {
         />
 
         <SummaryCard
-          title="Savings Rate"
-          value={`${stats.savingsRate}%`}
+          title={monthlyBudget > 0 ? "Savings Rate" : "Monthly Budget"}
+          value={monthlyBudget > 0 ? `${stats.savingsRate}%` : "Not Set"}
           icon={PiggyBank}
           accentColor="#8D91E8"
-          trend={`${stats.budgetUsedPercent.toFixed(0)}% Budget`}
-          trendDirection={stats.budgetUsedPercent > 80 ? 'down' : 'up'}
+          trend={monthlyBudget > 0 ? `${stats.budgetUsedPercent.toFixed(0)}% Budget` : "Set Target"}
+          trendDirection={monthlyBudget > 0 && stats.budgetUsedPercent > 80 ? 'down' : 'neutral'}
           isPositiveGood={true}
-          subLabel="Click to adjust monthly budget"
-          onClick={() => setIsBudgetModalOpen(true)}
+          subLabel={monthlyBudget > 0 ? "Click to adjust monthly budget" : "Click to set your spending limit"}
+          onClick={handleOpenBudget}
         />
       </div>
 

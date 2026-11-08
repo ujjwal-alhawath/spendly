@@ -25,8 +25,15 @@ app.use('/api/expenses', expenseRoutes);
 
 async function runTests() {
   const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/spendly';
-  await mongoose.connect(MONGO_URI);
-  console.log('Connected to MongoDB for testing.');
+  const LOCAL_URI = 'mongodb://127.0.0.1:27017/spendly';
+  try {
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 3000 });
+    console.log('Connected to MongoDB for testing (Primary).');
+  } catch (connErr) {
+    console.log('Primary MongoDB connection failed, falling back to local MongoDB for testing...');
+    await mongoose.connect(LOCAL_URI, { serverSelectionTimeoutMS: 3000 });
+    console.log('Connected to Local MongoDB for testing.');
+  }
 
   const server = app.listen(5002);
   const BASE_URL = 'http://localhost:5002/api';

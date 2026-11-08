@@ -28,25 +28,35 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 
-// Connect to MongoDB
+// Connect to MongoDB with graceful local fallback if Atlas IP is blocked
+const LOCAL_URI = 'mongodb://127.0.0.1:27017/spendly';
 let server;
-mongoose.connect(MONGO_URI)
-  .then(() => {
-    console.log('Connected to MongoDB');
-    if (process.env.NODE_ENV !== 'test') {
-      server = app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
+
+async function startServer() {
+  try {
+    console.log(`Connecting to MongoDB (${MONGO_URI.includes('mongodb+srv') ? 'Atlas' : 'Local'})...`);
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
+    console.log('Connected to MongoDB (Primary)');
+  } catch (err) {
+    console.error('Primary MongoDB connection error:', err.message);
+    if (MONGO_URI !== LOCAL_URI) {
+      console.log('Attempting fallback to local MongoDB...');
+      try {
+        await mongoose.connect(LOCAL_URI, { serverSelectionTimeoutMS: 3000 });
+        console.log('Connected to Local MongoDB (Fallback)');
+      } catch (localErr) {
+        console.error('Local MongoDB fallback also failed:', localErr.message);
+      }
     }
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    // Start server even if MongoDB is pending so API health/errors can be inspected
-    if (process.env.NODE_ENV !== 'test' && !server) {
-      server = app.listen(PORT, () => {
-        console.log(`Server running with database offline on port ${PORT}`);
-      });
-    }
-  });
+  }
+
+  if (process.env.NODE_ENV !== 'test' && !server) {
+    server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  }
+}
+
+startServer();
 
 module.exports = { app, mongoose };

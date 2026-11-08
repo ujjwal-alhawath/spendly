@@ -25,6 +25,8 @@ export function Budgets() {
   const categoryBudgets = useStore((state) => state.categoryBudgets || {});
   const setCategoryBudget = useStore((state) => state.setCategoryBudget);
   const currency = useStore((state) => state.currency);
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const openAuthModal = useStore((state) => state.openAuthModal);
 
   const stats = useExpenseStats(expenses, monthlyBudget);
 
@@ -32,13 +34,29 @@ export function Budgets() {
   const [editingCategory, setEditingCategory] = useState(null);
   const [newCatBudget, setNewCatBudget] = useState('');
 
+  const handleOpenOverallBudget = () => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to set or customize your monthly budget target.');
+      return;
+    }
+    setIsOverallBudgetModalOpen(true);
+  };
+
   const handleEditCategory = (cat) => {
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to set category budgets.');
+      return;
+    }
     setEditingCategory(cat);
     setNewCatBudget((categoryBudgets[cat.id] || 5000).toString());
   };
 
   const handleSaveCategoryBudget = (e) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      openAuthModal('Please log in to set category budgets.');
+      return;
+    }
     const num = Number(newCatBudget);
     if (!num || num < 0) {
       toast.error('Please enter a valid amount');
@@ -50,8 +68,9 @@ export function Budgets() {
   };
 
   // Determine overall status
-  const isOverBudget = stats.totalSpentThisMonth > monthlyBudget;
-  const isWarning = !isOverBudget && stats.budgetUsedPercent > 80;
+  const hasBudget = monthlyBudget > 0;
+  const isOverBudget = hasBudget && stats.totalSpentThisMonth > monthlyBudget;
+  const isWarning = hasBudget && !isOverBudget && stats.budgetUsedPercent > 80;
 
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto w-full pb-16">
@@ -68,11 +87,11 @@ export function Budgets() {
 
         <Button
           variant="primary"
-          onClick={() => setIsOverallBudgetModalOpen(true)}
+          onClick={handleOpenOverallBudget}
           className="neu-btn-primary shadow-neu-accent"
         >
           <Target className="w-4 h-4" />
-          <span>Edit Overall Budget</span>
+          <span>{hasBudget ? 'Edit Overall Budget' : 'Set Overall Budget'}</span>
         </Button>
       </div>
 
@@ -81,14 +100,18 @@ export function Budgets() {
         <div className="flex items-center gap-5 w-full md:w-auto">
           <div
             className={`w-16 h-16 rounded-3xl neu-icon-box flex items-center justify-center shrink-0 ${
-              isOverBudget
+              !hasBudget
+                ? 'text-primary bg-primary/10 border-primary/20'
+                : isOverBudget
                 ? 'text-danger bg-danger/10 border-danger/30'
                 : isWarning
                 ? 'text-warning bg-warning/10 border-warning/30'
                 : 'text-primary bg-primary/10 border-primary/30'
             }`}
           >
-            {isOverBudget ? (
+            {!hasBudget ? (
+              <Target className="w-8 h-8" />
+            ) : isOverBudget ? (
               <AlertTriangle className="w-8 h-8" />
             ) : (
               <CheckCircle2 className="w-8 h-8" />
@@ -102,14 +125,18 @@ export function Budgets() {
               </span>
               <span
                 className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase ${
-                  isOverBudget
+                  !hasBudget
+                    ? 'bg-primary/15 text-primary border border-primary/25'
+                    : isOverBudget
                     ? 'bg-danger/20 text-danger border border-danger/30'
                     : isWarning
                     ? 'bg-warning/20 text-warning border border-warning/30'
                     : 'bg-primary/20 text-primary border border-primary/30'
                 }`}
               >
-                {isOverBudget
+                {!hasBudget
+                  ? 'Not Set'
+                  : isOverBudget
                   ? 'Over Budget'
                   : isWarning
                   ? 'Approaching Limit'
@@ -119,11 +146,13 @@ export function Budgets() {
             <h3 className="text-2xl sm:text-3xl font-extrabold text-textPrimary mt-0.5">
               {formatCurrency(stats.totalSpentThisMonth, currency)}{' '}
               <span className="text-sm sm:text-base font-normal text-textSecondary">
-                / {formatCurrency(monthlyBudget, currency)}
+                / {hasBudget ? formatCurrency(monthlyBudget, currency) : 'No limit'}
               </span>
             </h3>
             <p className="text-xs text-textSecondary mt-1">
-              {stats.budgetRemaining > 0
+              {!hasBudget
+                ? 'Click "Set Overall Budget" to define your spending limit and savings goals.'
+                : stats.budgetRemaining > 0
                 ? `${formatCurrency(stats.budgetRemaining, currency)} remaining to spend safely this month`
                 : `Exceeded target by ${formatCurrency(stats.totalSpentThisMonth - monthlyBudget, currency)}`}
             </p>

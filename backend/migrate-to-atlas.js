@@ -27,7 +27,7 @@ async function migrate() {
   } catch (err) {
     console.error('✗ Failed to connect to MongoDB Atlas:', err.message);
     console.log('\nPlease make sure:');
-    console.log('1. In Atlas > Security > Database Access, the user "ujjwalahlawath" has the password updated.');
+    console.log('1. In Atlas > Security > Database Access, the database user has the password updated.');
     console.log('2. In Atlas > Security > Network Access, your IP address or 0.0.0.0/0 is whitelisted.');
     await localConn.close();
     process.exit(1);

@@ -1,3 +1,25 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Production Build Outputs
+dist
+dist-ssr
+**/dist
+build
+**/build
+
+# Environment Variables & Secrets (CRITICAL: Never commit .env files)
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
+
+# Vercel Deployment Artifacts
+.vercel
+**/.vercel
+
 # Logs
 logs
 *.log
@@ -7,30 +29,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editor & System Files
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# ENV
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Temp Files
+# Coverage & Temp Files
+coverage
 test.js
 models.json
 prompt.md

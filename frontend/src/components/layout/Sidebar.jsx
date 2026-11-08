@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Receipt,
@@ -8,6 +8,7 @@ import {
   Sparkles,
   Settings,
   LogOut,
+  LogIn,
   ChevronLeft,
   ChevronRight,
   Wallet,
@@ -15,7 +16,8 @@ import {
 import { useStore } from '../../store/useStore';
 
 export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
-  const { user, logout } = useStore();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useStore();
 
   const links = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -142,27 +144,37 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }) {
             >
               <div className="flex items-center gap-2.5 overflow-hidden">
                 <div className="w-9 h-9 rounded-2xl neu-card flex items-center justify-center text-xs font-bold text-primary shrink-0 bg-primary/10 border border-primary/20">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                  {isAuthenticated && user?.name ? user.name.charAt(0).toUpperCase() : 'G'}
                 </div>
                 {!isCollapsed && (
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-bold text-textPrimary truncate">
-                      {user?.name || 'Guest User'}
+                      {isAuthenticated ? (user?.name || 'User') : 'Guest Explorer'}
                     </span>
                     <span className="text-[11px] text-textSecondary truncate">
-                      {user?.email || 'guest@spendly.app'}
+                      {isAuthenticated ? (user?.email || 'user@spendly.app') : 'Explore Mode'}
                     </span>
                   </div>
                 )}
               </div>
 
-              <button
-                onClick={logout}
-                className="w-8 h-8 rounded-xl neu-btn flex items-center justify-center text-textSecondary hover:text-danger transition-colors cursor-pointer shrink-0"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={logout}
+                  className="w-8 h-8 rounded-xl neu-btn flex items-center justify-center text-textSecondary hover:text-danger transition-colors cursor-pointer shrink-0"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="w-8 h-8 rounded-xl neu-btn flex items-center justify-center text-primary hover:text-primary-dark transition-colors cursor-pointer shrink-0"
+                  title="Log In"
+                >
+                  <LogIn className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </div>
