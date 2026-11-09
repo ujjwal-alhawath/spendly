@@ -55,8 +55,8 @@ export function Dashboard() {
           value={formatCurrency(stats.totalBalance, currency)}
           icon={Wallet}
           accentColor="#51BFA2"
-          trend="+12.5%"
-          trendDirection="up"
+          trend={stats.balanceDiffPercent ? `${Number(stats.balanceDiffPercent) > 0 ? '+' : ''}${stats.balanceDiffPercent}%` : null}
+          trendDirection={stats.balanceDiffPercent ? (Number(stats.balanceDiffPercent) >= 0 ? 'up' : 'down') : 'neutral'}
           isPositiveGood={true}
           subLabel="Total estimated liquidity"
         />
@@ -66,8 +66,8 @@ export function Dashboard() {
           value={formatCurrency(stats.totalIncomeThisMonth, currency)}
           icon={TrendingUp}
           accentColor="#51BFA2"
-          trend={stats.incomeDiffPercent ? `${stats.incomeDiffPercent > 0 ? '+' : ''}${stats.incomeDiffPercent}%` : '+5.0%'}
-          trendDirection={stats.incomeDiffPercent && Number(stats.incomeDiffPercent) < 0 ? 'down' : 'up'}
+          trend={stats.incomeDiffPercent ? `${Number(stats.incomeDiffPercent) > 0 ? '+' : ''}${stats.incomeDiffPercent}%` : null}
+          trendDirection={stats.incomeDiffPercent ? (Number(stats.incomeDiffPercent) >= 0 ? 'up' : 'down') : 'neutral'}
           isPositiveGood={true}
           subLabel="Gross revenue this month"
         />
@@ -77,8 +77,8 @@ export function Dashboard() {
           value={formatCurrency(stats.totalSpentThisMonth, currency)}
           icon={CreditCard}
           accentColor="#E77F91"
-          trend={stats.expenseDiffPercent ? `${stats.expenseDiffPercent > 0 ? '+' : ''}${stats.expenseDiffPercent}%` : '-2.4%'}
-          trendDirection={stats.expenseDiffPercent && Number(stats.expenseDiffPercent) > 0 ? 'up' : 'down'}
+          trend={stats.expenseDiffPercent ? `${Number(stats.expenseDiffPercent) > 0 ? '+' : ''}${stats.expenseDiffPercent}%` : null}
+          trendDirection={stats.expenseDiffPercent ? (Number(stats.expenseDiffPercent) > 0 ? 'up' : 'down') : 'neutral'}
           isPositiveGood={false}
           subLabel={`${stats.numTransactions} transactions recorded`}
         />

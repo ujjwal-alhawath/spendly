@@ -113,6 +113,16 @@ export function useExpenseStats(expenses = [], monthlyBudget = 0) {
           ).toFixed(1)
         : null;
 
+    const prevMonthNet = totalIncomePrevMonth - totalSpentPrevMonth;
+    const currentMonthNet = totalIncomeThisMonth - totalSpentThisMonth;
+    const balanceDiffPercent =
+      (totalIncomePrevMonth > 0 || totalSpentPrevMonth > 0) && prevMonthNet !== 0
+        ? (
+            ((currentMonthNet - prevMonthNet) / Math.abs(prevMonthNet)) *
+            100
+          ).toFixed(1)
+        : null;
+
     // Build Category Map
     const categoryTotals = {};
     CATEGORIES.forEach((c) => {
@@ -243,6 +253,7 @@ export function useExpenseStats(expenses = [], monthlyBudget = 0) {
       categoryTotals,
       expenseDiffPercent,
       incomeDiffPercent,
+      balanceDiffPercent,
       donutData,
       trendData,
       monthBarData,
