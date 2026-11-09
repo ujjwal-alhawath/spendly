@@ -1,8 +1,14 @@
 export const DEFAULT_BUDGET = 0;
 
+// Auto-detect production backend when hosted on Vercel, fallback to localhost for local dev
+const defaultApiUrl =
+  typeof window !== 'undefined' && window.location && window.location.hostname && window.location.hostname.includes('vercel.app')
+    ? 'https://spendly-ba2z.vercel.app/api'
+    : 'http://localhost:5005/api';
+
 const rawApiUrl =
   (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL)) ||
-  'http://localhost:5005/api';
+  defaultApiUrl;
 
 // Normalize URL: remove any trailing slashes, and ensure it ends with /api
 const trimmedUrl = String(rawApiUrl).replace(/\/+$/, '');
