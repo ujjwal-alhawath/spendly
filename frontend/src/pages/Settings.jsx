@@ -27,7 +27,6 @@ export function Settings() {
     monthlyBudget,
     setBudget,
     expenses,
-    loadDemoData,
     clearAllExpenses,
   } = useStore();
 
@@ -305,32 +304,6 @@ export function Settings() {
             </label>
           </div>
 
-          {/* Reset Demo Data */}
-          <div className="p-4 rounded-2xl neu-inset flex flex-col justify-between gap-3">
-            <div>
-              <h4 className="text-sm font-bold text-textPrimary flex items-center gap-2">
-                <RefreshCw className="w-4 h-4 text-primary" />
-                <span>Restore Sample Data</span>
-              </h4>
-              <p className="text-xs text-textSecondary mt-1 leading-relaxed">
-                Reset your records with pre-populated realistic salary, grocery, and utility records.
-              </p>
-            </div>
-            <Button
-              variant="surface"
-              size="sm"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  openAuthModal('Please log in to reload sample data to your account.');
-                  return;
-                }
-                loadDemoData();
-                toast.success('Sample transactions reloaded');
-              }}
-            >
-              Load Demo Records
-            </Button>
-          </div>
 
           {/* Wipe All Data */}
           <div className="p-4 rounded-2xl neu-inset flex flex-col justify-between gap-3">

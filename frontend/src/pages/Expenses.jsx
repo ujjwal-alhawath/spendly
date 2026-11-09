@@ -18,7 +18,6 @@ export function Expenses() {
   const currency = useStore((state) => state.currency);
   const isAuthenticated = useStore((state) => state.isAuthenticated);
   const openAuthModal = useStore((state) => state.openAuthModal);
-  const loadDemoData = useStore((state) => state.loadDemoData);
   const [searchParams] = useSearchParams();
 
   const [filters, setFilters] = useState({
@@ -192,9 +191,6 @@ export function Expenses() {
           <div className="flex flex-wrap items-center gap-3 justify-center">
             <Button variant="primary" onClick={handleOpenAdd}>
               Add Transaction
-            </Button>
-            <Button variant="surface" onClick={loadDemoData}>
-              Load Sample Data
             </Button>
           </div>
         </NeumorphicCard>

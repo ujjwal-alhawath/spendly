@@ -3,88 +3,19 @@ import { persist } from 'zustand/middleware';
 import { generateId } from '../utils/formatters.js';
 import { API_BASE } from '../constants/index.js';
 
-// Generate realistic seed transactions for DEMO / SAMPLE only
-export const generateDemoTransactions = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const d = (day) => `${year}-${month}-${String(day).padStart(2, '0')}`;
+// Generate realistic seed transactions for DEMO / SAMPLE only - now clean empty slate by default
+export const generateDemoTransactions = () => [];
 
-  const prevMonthDate = new Date(year, now.getMonth() - 1, 15);
-  const pYear = prevMonthDate.getFullYear();
-  const pMonth = String(prevMonthDate.getMonth() + 1).padStart(2, '0');
-  const pd = (day) => `${pYear}-${pMonth}-${String(day).padStart(2, '0')}`;
-
-  const twoMonthsAgoDate = new Date(year, now.getMonth() - 2, 15);
-  const p2Year = twoMonthsAgoDate.getFullYear();
-  const p2Month = String(twoMonthsAgoDate.getMonth() + 1).padStart(2, '0');
-  const p2d = (day) => `${p2Year}-${p2Month}-${String(day).padStart(2, '0')}`;
-
-  return [
-    // Current Month Income
-    { id: generateId(), title: 'Tech Corp Monthly Salary', amount: 85000, category: 'Salary', type: 'income', date: d(1), note: 'Direct deposit', createdAt: Date.now() - 1000000 },
-    { id: generateId(), title: 'Freelance UI/UX Project', amount: 24000, category: 'Freelance', type: 'income', date: d(12), note: 'Client milestone delivery', createdAt: Date.now() - 850000 },
-    { id: generateId(), title: 'Stock Dividend Payout', amount: 6500, category: 'Investment', type: 'income', date: d(18), note: 'Quarterly payout', createdAt: Date.now() - 650000 },
-
-    // Current Month Expenses
-    { id: generateId(), title: 'Organic Market Groceries', amount: 4850, category: 'Food', type: 'expense', date: d(3), note: 'Weekly produce & groceries', createdAt: Date.now() - 950000 },
-    { id: generateId(), title: 'Apartment Fiber Internet', amount: 1499, category: 'Bills', type: 'expense', date: d(5), note: '1 Gbps plan', createdAt: Date.now() - 900000 },
-    { id: generateId(), title: 'Fuel & Highway Tolls', amount: 3200, category: 'Transport', type: 'expense', date: d(7), note: 'Shell gas station', createdAt: Date.now() - 880000 },
-    { id: generateId(), title: 'Artisan Cafe & Bakery', amount: 1250, category: 'Food', type: 'expense', date: d(9), note: 'Team breakfast', createdAt: Date.now() - 820000 },
-    { id: generateId(), title: 'Premium Gym & Spa Membership', amount: 3500, category: 'Health', type: 'expense', date: d(11), note: 'Monthly membership', createdAt: Date.now() - 780000 },
-    { id: generateId(), title: 'Noise-Cancelling Headphones', amount: 8999, category: 'Shopping', type: 'expense', date: d(14), note: 'Workspace audio upgrade', createdAt: Date.now() - 720000 },
-    { id: generateId(), title: 'IMAX Cinema & Concessions', amount: 1850, category: 'Entertainment', type: 'expense', date: d(16), note: 'Weekend movie', createdAt: Date.now() - 680000 },
-    { id: generateId(), title: 'Electricity & Utility Bill', amount: 3800, category: 'Bills', type: 'expense', date: d(19), note: 'Power & water', createdAt: Date.now() - 500000 },
-    { id: generateId(), title: 'Gourmet Bistro Dinner', amount: 2600, category: 'Food', type: 'expense', date: d(21), note: 'Dinner with family', createdAt: Date.now() - 400000 },
-
-    // Previous Months
-    { id: generateId(), title: 'Tech Corp Monthly Salary', amount: 85000, category: 'Salary', type: 'income', date: pd(1), note: 'Salary', createdAt: Date.now() - 3000000 },
-    { id: generateId(), title: 'Supermarket Groceries', amount: 7200, category: 'Food', type: 'expense', date: pd(5), note: '', createdAt: Date.now() - 2900000 },
-    { id: generateId(), title: 'Utilities & Power', amount: 3600, category: 'Bills', type: 'expense', date: pd(10), note: '', createdAt: Date.now() - 2800000 },
-    { id: generateId(), title: 'Apparel & Footwear', amount: 6400, category: 'Shopping', type: 'expense', date: pd(15), note: '', createdAt: Date.now() - 2700000 },
-
-    { id: generateId(), title: 'Tech Corp Monthly Salary', amount: 82000, category: 'Salary', type: 'income', date: p2d(1), note: 'Salary', createdAt: Date.now() - 6000000 },
-    { id: generateId(), title: 'Groceries & Household', amount: 6900, category: 'Food', type: 'expense', date: p2d(6), note: '', createdAt: Date.now() - 5900000 },
-  ];
-};
-
-// Seed notifications for Demo User (Alex Morgan)
+// Seed notifications for Demo / Guest User
 export const generateDemoNotifications = (user) => [
   {
-    id: 'demo-notif-budget',
-    title: 'Budget Alert (77% Used)',
-    message: 'You have spent ₹26,998 of your ₹35,000 monthly target. 8 days remaining in this cycle.',
-    type: 'warning',
-    time: '15 min ago',
-    read: false,
-    link: '/budgets',
-  },
-  {
-    id: 'demo-notif-topcat',
-    title: 'Top Category: Food & Dining',
-    message: 'Food represents your highest category this month with ₹8,700 across 3 transactions.',
-    type: 'info',
-    time: '2 hours ago',
-    read: false,
-    link: '/analytics',
-  },
-  {
-    id: 'demo-notif-ai',
-    title: 'AI Financial Advisor (Coming Soon)',
-    message: 'Intelligent AI financial forecasting and expense advisory are currently under development.',
-    type: 'ai',
-    time: '5 hours ago',
-    read: false,
-    link: '/chat',
-  },
-  {
     id: 'demo-notif-welcome',
-    title: `Welcome, ${user?.name ? user.name.split(' ')[0] : 'Alex'}!`,
-    message: 'Your personal finance workspace is active with soft neumorphic controls.',
+    title: `Welcome, ${user?.name ? user.name.split(' ')[0] : 'friend'}!`,
+    message: 'Your personal finance workspace is active and ready. Add your first transaction to get started.',
     type: 'success',
-    time: '1 day ago',
-    read: true,
-    link: '/',
+    time: 'Just now',
+    read: false,
+    link: '/expenses',
   },
 ];
 
@@ -155,7 +86,7 @@ export const useStore = create(
       isAuthModalOpen: false,
       authModalMessage: '',
       currency: 'INR',
-      expenses: generateDemoTransactions(),
+      expenses: [],
       monthlyBudget: 0,
       categoryBudgets: DEFAULT_CATEGORY_BUDGETS,
       chatHistory: [],
@@ -208,9 +139,9 @@ export const useStore = create(
           }
         }
 
-        // 3. Fallbacks for demo user
-        if (userExpenses.length === 0 && (userData?.email === 'alex.morgan@spendly.app' || userKey === 'guest')) {
-          userExpenses = generateDemoTransactions();
+        // 3. Fallbacks for demo user (clean empty state)
+        if (userData?.email === 'alex.morgan@spendly.app' || userKey === 'guest') {
+          userExpenses = cached?.expenses || [];
         }
 
         // 4. Initialize notifications if not already saved for this user
@@ -286,12 +217,12 @@ export const useStore = create(
           });
         }
 
-        // Switch to clean guest explore state with sample data
+        // Switch to clean guest explore state
         set({
           user: null,
           token: null,
           isAuthenticated: false,
-          expenses: generateDemoTransactions(),
+          expenses: [],
           monthlyBudget: 0,
           chatHistory: [],
           notifications: generateDemoNotifications(null),
@@ -507,7 +438,7 @@ export const useStore = create(
       loadDemoData: () => {
         const { user, categoryBudgets, chatHistory } = get();
         const userKey = getUserKey(user);
-        const demoData = generateDemoTransactions();
+        const demoData = [];
         const demoNotifs = generateDemoNotifications(user);
 
         set({ expenses: demoData, monthlyBudget: 0, notifications: demoNotifs });
@@ -691,7 +622,7 @@ export const useStore = create(
       },
     }),
     {
-      name: 'spendly-session-v3',
+      name: 'spendly-session-v4',
     }
   )
 );

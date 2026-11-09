@@ -91,12 +91,9 @@ try {
   assert(false, 'buildContext throws on 0 budget', e.message);
 }
 
-// 6. generateDemoTransactions
+// 6. generateDemoTransactions returns clean empty array by default
 const demoData = generateDemoTransactions();
-assert(Array.isArray(demoData) && demoData.length > 10, 'generateDemoTransactions creates seed data');
-const demoIncome = demoData.filter(d => d.type === 'income');
-const demoExpense = demoData.filter(d => d.type !== 'income');
-assert(demoIncome.length > 0 && demoExpense.length > 0, 'demoData contains both income and expenses');
+assert(Array.isArray(demoData) && demoData.length === 0, 'generateDemoTransactions returns empty clean array');
 
 console.log(`\nFrontend Utility Tests: ${passed} passed, ${failed} failed.`);
 process.exit(failed > 0 ? 1 : 0);
